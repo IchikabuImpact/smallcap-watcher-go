@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{.Ticker}} - JPX Smallcap Watcher</title>
+  <link rel="stylesheet" href="../static/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <a class="back-link" href="../index.html">← Back to List</a>
+      <h1>{{.CompanyName}} ({{.Ticker}})</h1>
+      <p class="subtitle">Historical details</p>
+    </header>
+
+    <main>
+      <div class="card">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Price</th>
+              <th>Prev Close</th>
+              <th>Change</th>
+              <th>Signal</th>
+              <th>Vol</th>
+              <th>PER</th>
+              <th>PBR</th>
+              <th>Yield</th>
+            </tr>
+          </thead>
+          <tbody>
+          {{range .Items}}
+            <tr>
+              <td>{{.Date}}</td>
+              <td>{{formatFloat .CurrentPrice}}</td>
+              <td>{{.PreviousClose}}</td>
+              <td class="change {{changeClass .PriceMovement}}">{{formatChange .PriceMovement}}</td>
+              <td class="signal {{signalClass .Signal}}"><span class="badge">{{.Signal}}</span></td>
+              <td>{{formatInt .Volume}}</td>
+              <td>{{formatPER .PER}}</td>
+              <td>{{formatPBR .PBR}}</td>
+              <td>{{formatYield .DividendYield}}</td>
+            </tr>
+          {{end}}
+          </tbody>
+        </table>
+      </div>
+    </main>
+
+    <footer>
+      <p>&copy; 2026 IchikabuImpact</p>
+    </footer>
+  </div>
+</body>
+</html>
