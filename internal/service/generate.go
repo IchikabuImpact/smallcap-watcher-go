@@ -42,9 +42,13 @@ type ListView struct {
 }
 
 type DetailView struct {
-	Ticker      string
-	CompanyName string
-	Items       []DetailItem
+	Ticker        string
+	CompanyName   string
+	CurrentPrice  sql.NullFloat64
+	PreviousClose string
+	Signal        string
+	MarketCap     string
+	Items         []DetailItem
 }
 
 func GenerateHTML(db *sql.DB) error {
@@ -125,7 +129,15 @@ func GenerateHTML(db *sql.DB) error {
 			return err
 		}
 
-		view := DetailView{Ticker: item.Ticker, CompanyName: item.CompanyName, Items: detailItems}
+		view := DetailView{
+			Ticker:        item.Ticker,
+			CompanyName:   item.CompanyName,
+			CurrentPrice:  item.CurrentPrice,
+			PreviousClose: item.PreviousClose,
+			Signal:        item.Signal,
+			MarketCap:     item.MarketCap,
+			Items:         detailItems,
+		}
 		if err := detailTmpl.Execute(detailFile, view); err != nil {
 			detailFile.Close()
 			return err

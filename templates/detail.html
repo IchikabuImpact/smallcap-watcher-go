@@ -12,7 +12,6 @@
 <body>
   <div class="container">
     <header>
-
       <a class="back-link" href="../index.html">&larr; Back to List</a>
       <h1>{{.CompanyName}} <span class="ticker-header">{{.Ticker}}</span></h1>
     </header>
@@ -21,34 +20,24 @@
       <div class="summary-grid">
         <div class="card summary-item">
           <h3>Current Price</h3>
-          <p class="price-large">{{if .Items}}{{formatFloat (index .Items 0).CurrentPrice}}{{end}}</p>
+          <p class="price-large">{{formatFloat .CurrentPrice}}</p>
         </div>
         <div class="card summary-item">
           <h3>Prev Close</h3>
-          <p>{{if .Items}}{{(index .Items 0).PreviousClose}}{{end}}</p>
+          <p>{{.PreviousClose}}</p>
         </div>
         <div class="card summary-item">
           <h3>Signal</h3>
-          <span class="badge {{if .Items}}{{signalClass (index .Items 0).Signal}}{{end}}">
-            {{if .Items}}{{(index .Items 0).Signal}}{{else}}-{{end}}
-          </span>
+          <span class="badge {{signalClass .Signal}}">{{if .Signal}}{{.Signal}}{{else}}-{{end}}</span>
         </div>
         <div class="card summary-item">
           <h3>Market Cap</h3>
-          <p>{{if .Items}}{{(index .Items 0).MarketCap}}{{end}}</p>
+          <p>{{.MarketCap}}</p>
         </div>
       </div>
 
       <div class="card">
         <h2>History</h2>
-
-      <a class="back-link" href="../index.html">← Back to List</a>
-      <h1>{{.CompanyName}} ({{.Ticker}})</h1>
-      <p class="subtitle">Historical details</p>
-    </header>
-
-    <main>
-      <div class="card">
         <table>
           <thead>
             <tr>
@@ -57,14 +46,6 @@
               <th>Change</th>
               <th>Signal</th>
               <th>Volume</th>
-              <th>Prev Close</th>
-              <th>Change</th>
-              <th>Signal</th>
-              <th>Vol</th>
-              <th>PER</th>
-              <th>PBR</th>
-              <th>Yield</th>
-
             </tr>
           </thead>
           <tbody>
@@ -75,13 +56,6 @@
               <td class="change {{changeClass .PriceMovement}}">{{formatChange .PriceMovement}}</td>
               <td class="signal {{signalClass .Signal}}"><span class="badge">{{.Signal}}</span></td>
               <td>{{formatInt .Volume}}</td>
-              <td>{{.PreviousClose}}</td>
-              <td class="change {{changeClass .PriceMovement}}">{{formatChange .PriceMovement}}</td>
-              <td class="signal {{signalClass .Signal}}"><span class="badge">{{.Signal}}</span></td>
-              <td>{{formatInt .Volume}}</td>
-              <td>{{formatPER .PER}}</td>
-              <td>{{formatPBR .PBR}}</td>
-              <td>{{formatYield .DividendYield}}</td>
             </tr>
           {{end}}
           </tbody>
