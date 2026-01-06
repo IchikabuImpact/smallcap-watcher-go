@@ -12,6 +12,36 @@
 <body>
   <div class="container">
     <header>
+
+      <a class="back-link" href="../index.html">&larr; Back to List</a>
+      <h1>{{.CompanyName}} <span class="ticker-header">{{.Ticker}}</span></h1>
+    </header>
+
+    <main>
+      <div class="summary-grid">
+        <div class="card summary-item">
+          <h3>Current Price</h3>
+          <p class="price-large">{{if .Items}}{{formatFloat (index .Items 0).CurrentPrice}}{{end}}</p>
+        </div>
+        <div class="card summary-item">
+          <h3>Prev Close</h3>
+          <p>{{if .Items}}{{(index .Items 0).PreviousClose}}{{end}}</p>
+        </div>
+        <div class="card summary-item">
+          <h3>Signal</h3>
+          <span class="badge {{if .Items}}{{signalClass (index .Items 0).Signal}}{{end}}">
+            {{if .Items}}{{(index .Items 0).Signal}}{{else}}-{{end}}
+          </span>
+        </div>
+        <div class="card summary-item">
+          <h3>Market Cap</h3>
+          <p>{{if .Items}}{{(index .Items 0).MarketCap}}{{end}}</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>History</h2>
+
       <a class="back-link" href="../index.html">← Back to List</a>
       <h1>{{.CompanyName}} ({{.Ticker}})</h1>
       <p class="subtitle">Historical details</p>
@@ -24,6 +54,9 @@
             <tr>
               <th>Date</th>
               <th>Price</th>
+              <th>Change</th>
+              <th>Signal</th>
+              <th>Volume</th>
               <th>Prev Close</th>
               <th>Change</th>
               <th>Signal</th>
@@ -31,6 +64,7 @@
               <th>PER</th>
               <th>PBR</th>
               <th>Yield</th>
+
             </tr>
           </thead>
           <tbody>
@@ -38,6 +72,9 @@
             <tr>
               <td>{{.Date}}</td>
               <td>{{formatFloat .CurrentPrice}}</td>
+              <td class="change {{changeClass .PriceMovement}}">{{formatChange .PriceMovement}}</td>
+              <td class="signal {{signalClass .Signal}}"><span class="badge">{{.Signal}}</span></td>
+              <td>{{formatInt .Volume}}</td>
               <td>{{.PreviousClose}}</td>
               <td class="change {{changeClass .PriceMovement}}">{{formatChange .PriceMovement}}</td>
               <td class="signal {{signalClass .Signal}}"><span class="badge">{{.Signal}}</span></td>
