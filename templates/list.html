@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JPX Smallcap Watcher</title>
+  <link rel="stylesheet" href="static/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>JPX Smallcap Watcher</h1>
+      <p class="subtitle">Small Cap Stock Tracking Dashboard</p>
+    </header>
+
+    <main>
+      <div class="card">
+        <table id="watch-table">
+          <thead>
+            <tr>
+              <th data-type="text">Ticker</th>
+              <th data-type="text">Company</th>
+              <th data-type="number">Price</th>
+              <th data-type="text">Prev Close</th>
+              <th data-type="number">Change</th>
+              <th data-type="text">Signal</th>
+              <th data-type="number">Vol</th>
+              <th data-type="number">PER</th>
+              <th data-type="number">PBR</th>
+              <th data-type="number">Yield</th>
+            </tr>
+          </thead>
+          <tbody>
+          {{range .Items}}
+            <tr onclick="window.location.href='detail/{{.Ticker}}.html'" class="clickable-row">
+              <td class="ticker" data-value="{{.Ticker}}">{{.Ticker}}</td>
+              <td class="company" data-value="{{.CompanyName}}">{{.CompanyName}}</td>
+              <td class="price" data-value="{{if .CurrentPrice.Valid}}{{formatFloat .CurrentPrice}}{{end}}">{{formatFloat .CurrentPrice}}</td>
+              <td data-value="{{.PreviousClose}}">{{.PreviousClose}}</td>
+              <td class="change {{changeClass .PriceMovement}}" data-value="{{numericValue .PriceMovement}}">{{formatChange .PriceMovement}}</td>
+              <td class="signal {{signalClass .Signal}}" data-value="{{.Signal}}">
+                <span class="badge">{{.Signal}}</span>
+              </td>
+              <td data-value="{{if .Volume.Valid}}{{.Volume.Int64}}{{end}}">{{formatInt .Volume}}</td>
+              <td data-value="{{numericValue .PER}}">{{formatPER .PER}}</td>
+              <td data-value="{{if .PBR.Valid}}{{formatFloat .PBR}}{{end}}">{{formatPBR .PBR}}</td>
+              <td data-value="{{numericValue .DividendYield}}">{{formatYield .DividendYield}}</td>
+            </tr>
+          {{end}}
+          </tbody>
+        </table>
+      </div>
+    </main>
+
+    <footer>
+      <p>&copy; 2026 IchikabuImpact</p>
+    </footer>
+  </div>
+
+  <script>
+    const table = document.getElementById('watch-table');
+    const headers = table.querySelectorAll('th');
+    let sortIndex = -1;
+    let sortAsc = true;
+
+    headers.forEach((header, index) => {
+      header.addEventListener('click', () => {
+        const type = header.dataset.type || 'text';
+        sortAsc = sortIndex === index ? !sortAsc : true;
+        sortIndex = index;
+
+        const rows = Array.from(table.tBodies[0].rows);
+        rows.sort((a, b) => {
+          const aCell = a.cells[index];
+          const bCell = b.cells[index];
+          const aValue = aCell.dataset.value || aCell.textContent.trim();
+          const bValue = bCell.dataset.value || bCell.textContent.trim();
+
+          if (type === 'number') {
+            const aNum = aValue === '' ? NaN : Number(aValue);
+            const bNum = bValue === '' ? NaN : Number(bValue);
+            if (Number.isNaN(aNum) && Number.isNaN(bNum)) return 0;
+            if (Number.isNaN(aNum)) return 1;
+            if (Number.isNaN(bNum)) return -1;
+            return sortAsc ? aNum - bNum : bNum - aNum;
+          }
+
+          const aText = aValue.toLowerCase();
+          const bText = bValue.toLowerCase();
+          if (aText === bText) return 0;
+          return sortAsc ? (aText > bText ? 1 : -1) : (aText > bText ? -1 : 1);
+        });
+
+        rows.forEach((row) => table.tBodies[0].appendChild(row));
+        headers.forEach((h) => h.classList.remove('sorted-asc', 'sorted-desc'));
+        header.classList.add(sortAsc ? 'sorted-asc' : 'sorted-desc');
+      });
+    });
+  </script>
+</body>
+</html>
