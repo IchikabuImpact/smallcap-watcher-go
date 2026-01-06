@@ -12,6 +12,7 @@
 <body>
   <div class="container">
     <header>
+
       <a class="back-link" href="../index.html">&larr; Back to List</a>
       <h1>{{.CompanyName}} <span class="ticker-header">{{.Ticker}}</span></h1>
     </header>
@@ -40,6 +41,14 @@
 
       <div class="card">
         <h2>History</h2>
+
+      <a class="back-link" href="../index.html">← Back to List</a>
+      <h1>{{.CompanyName}} ({{.Ticker}})</h1>
+      <p class="subtitle">Historical details</p>
+    </header>
+
+    <main>
+      <div class="card">
         <table>
           <thead>
             <tr>
@@ -48,6 +57,14 @@
               <th>Change</th>
               <th>Signal</th>
               <th>Volume</th>
+              <th>Prev Close</th>
+              <th>Change</th>
+              <th>Signal</th>
+              <th>Vol</th>
+              <th>PER</th>
+              <th>PBR</th>
+              <th>Yield</th>
+
             </tr>
           </thead>
           <tbody>
@@ -58,6 +75,13 @@
               <td class="change {{changeClass .PriceMovement}}">{{formatChange .PriceMovement}}</td>
               <td class="signal {{signalClass .Signal}}"><span class="badge">{{.Signal}}</span></td>
               <td>{{formatInt .Volume}}</td>
+              <td>{{.PreviousClose}}</td>
+              <td class="change {{changeClass .PriceMovement}}">{{formatChange .PriceMovement}}</td>
+              <td class="signal {{signalClass .Signal}}"><span class="badge">{{.Signal}}</span></td>
+              <td>{{formatInt .Volume}}</td>
+              <td>{{formatPER .PER}}</td>
+              <td>{{formatPBR .PBR}}</td>
+              <td>{{formatYield .DividendYield}}</td>
             </tr>
           {{end}}
           </tbody>
