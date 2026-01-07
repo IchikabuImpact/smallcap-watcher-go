@@ -13,6 +13,48 @@
 - **Docker** / **Docker Compose**（推奨）
 - もしくは **Go 1.22+** と **MySQL 8.0+**
 
+## Dockerのインストール（Ubuntu / RedHat系 Linux）
+
+### Ubuntu
+
+```bash
+sudo snap install docker
+sudo apt install docker.io
+sudo apt install podman-docker
+```
+
+#### Ubuntu 24.04 LTS (WSL) の注意点
+
+WSL環境で `podman-docker` を入れると Docker CLI が Podman エミュレーションになり、
+`docker compose` が外部の `docker-compose` (v1) を呼び出して `FileNotFoundError` が出る場合があります。
+その場合は以下を確認してください。
+
+```bash
+# Docker Desktop for Windows を使うか、WSL 内で docker を有効化する
+sudo systemctl enable --now docker
+
+# podman-docker を外して Docker 公式パッケージ + Compose プラグインを入れる
+sudo apt remove podman-docker
+sudo apt update
+sudo apt install ca-certificates curl gnupg
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo \"$VERSION_CODENAME\") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt update
+sudo apt install docker-ce docker-ce-cli docker-compose-plugin
+
+# docker compose が v2 系か確認する
+docker compose version
+```
+
+### RedHat系 Linux（RHEL / CentOS / Rocky / Alma など）
+
+```bash
+sudo dnf install docker
+sudo systemctl enable --now docker
+```
+
 ## 使い方（Docker）
 
 ### 1. 設定ファイルの準備
@@ -44,7 +86,7 @@ docker compose run --rm app --batch --gen
 
 ### 4. HTMLの確認（任意）
 
-Nginxで `output/` を配信します。
+Nginxで `output/` を配信します。Webサーバーも compose で起動できます。
 
 ```bash
 docker compose up -d web
