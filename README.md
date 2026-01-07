@@ -29,9 +29,17 @@ WSL環境で `podman-docker` を入れると Docker CLI が Podman エミュレ�
 `docker compose` が外部の `docker-compose` (v1) を呼び出して `FileNotFoundError` が出る場合があります。
 その場合は以下を確認してください。
 
-- Docker Desktop for Windows を使う、または WSL 内で `docker` サービスを有効化する
-- `podman-docker` を外して Docker 公式の `docker-ce` / `docker-ce-cli` + Compose プラグインを入れる
-- `docker compose version` が v2 系になっていることを確認する
+```bash
+# Docker Desktop for Windows を使うか、WSL 内で docker を有効化する
+sudo systemctl enable --now docker
+
+# podman-docker を外して Docker 公式パッケージ + Compose プラグインを入れる
+sudo apt remove podman-docker
+sudo apt install docker-ce docker-ce-cli docker-compose-plugin
+
+# docker compose が v2 系か確認する
+docker compose version
+```
 
 ### RedHat系 Linux（RHEL / CentOS / Rocky / Alma など）
 
