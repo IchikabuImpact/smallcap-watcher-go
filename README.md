@@ -65,28 +65,29 @@ cp env.config.sample env.config
 
 必要に応じて `env.config` を編集してください。`env.config` が存在しない場合はデフォルト値で動作します。Docker実行時は `env.config` をコンテナへマウントします。
 
-### 2. MySQLの準備
+### 2. コンテナ起動・初期化・バッチ実行
 
-移植元と同様に、MySQL はコンテナではなく別サーバーで起動してください。`env.config` にホスト名やユーザー情報を設定します。
-
-### 3. 初期化・シード・バッチ実行
+移植元と同様に、MySQL と Web サーバーを Compose で起動します。通常は以下の手順で完結します。
 
 ```bash
-# スキーマ作成
-docker compose run --rm app --init
+# 1. コンテナとボリュームの削除 (データが完全に消えます)
+docker compose down -v --remove-orphans
 
-# 監視銘柄の投入
+# 2. ビルドと起動 (キャッシュなし推奨: コード変更を確実に反映させるため)
+docker compose build --no-cache
+docker compose up -d mysql web
+
+# 3. 初期化・監視銘柄投入
+docker compose run --rm app --init
 docker compose run --rm app --seed
 
-# データ取得 + HTML生成
+# 4. バッチ実行 + HTML生成
 docker compose run --rm app --batch --gen
 ```
 
-### 4. HTMLの確認（任意）
+### 3. HTMLの確認（任意）
 
-移植元と同様に、Webサーバーは別サーバーで `output/` を配信してください。
-
-`http://localhost:8282` を開くとレポートを確認できます。
+Nginxで `output/` を配信します。`http://localhost:8282` を開くとレポートを確認できます。
 
 ## 使い方（ローカル）
 
