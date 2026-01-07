@@ -65,11 +65,9 @@ cp env.config.sample env.config
 
 必要に応じて `env.config` を編集してください。`env.config` が存在しない場合はデフォルト値で動作します。Docker実行時は `env.config` をコンテナへマウントします。
 
-### 2. MySQLの起動
+### 2. MySQLの準備
 
-```bash
-docker compose up -d mysql
-```
+MySQL はコンテナではなく別サーバーで起動してください。`env.config` にホスト名やユーザー情報を設定します。
 
 ### 3. 初期化・シード・バッチ実行
 
