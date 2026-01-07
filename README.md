@@ -13,6 +13,33 @@
 - **Docker** / **Docker Compose**（推奨）
 - もしくは **Go 1.22+** と **MySQL 8.0+**
 
+## Dockerのインストール（Ubuntu / RedHat系 Linux）
+
+### Ubuntu
+
+```bash
+sudo snap install docker
+sudo apt install docker.io
+sudo apt install podman-docker
+```
+
+#### Ubuntu 24.04 LTS (WSL) の注意点
+
+WSL環境で `podman-docker` を入れると Docker CLI が Podman エミュレーションになり、
+`docker compose` が外部の `docker-compose` (v1) を呼び出して `FileNotFoundError` が出る場合があります。
+その場合は以下を確認してください。
+
+- Docker Desktop for Windows を使う、または WSL 内で `docker` サービスを有効化する
+- `podman-docker` を外して Docker 公式の `docker-ce` / `docker-ce-cli` + Compose プラグインを入れる
+- `docker compose version` が v2 系になっていることを確認する
+
+### RedHat系 Linux（RHEL / CentOS / Rocky / Alma など）
+
+```bash
+sudo dnf install docker
+sudo systemctl enable --now docker
+```
+
 ## 使い方（Docker）
 
 ### 1. 設定ファイルの準備
