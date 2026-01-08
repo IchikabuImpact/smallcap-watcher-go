@@ -94,6 +94,21 @@ sudo usermod -aG docker $USER
 Docker Desktop と WSL 内 Docker Engine が混在しているとソケット接続で詰まることがあります。
 どちらか一方に統一してください（例: Windows 側は Docker Desktop、WSL 側は Docker Engine のみ運用）。
 
+#### Docker ビルドで `missing go.sum entry` が出る場合
+
+WSL に Go が入っていない場合は、Go の公式イメージで `go mod tidy` を実行し、`go.sum` を補完してください。
+
+```bash
+docker run --rm -v "$PWD":/app -w /app golang:1.22-alpine sh -c "go mod tidy"
+```
+
+その後、キャッシュを無効にして app イメージを再ビルドします。
+
+```bash
+docker compose build --no-cache app
+docker compose up -d
+```
+
 ### 3. 初期化・シード・バッチ実行
 
 ```bash
