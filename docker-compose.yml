@@ -29,7 +29,7 @@ services:
         condition: service_healthy
     entrypoint: ["sh", "-c", "tail -f /dev/null"]
     volumes:
-      - ./output:/app/output
+      - output-data:/app/output
       - ./env.config:/app/env.config:ro
 
   web:
@@ -38,7 +38,8 @@ services:
     ports:
       - "8282:80"
     volumes:
-      - ./output:/usr/share/nginx/html:ro
+      - output-data:/usr/share/nginx/html:ro
 
 volumes:
   mysql-data:
+  output-data:
