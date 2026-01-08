@@ -19,6 +19,7 @@ services:
 
   app:
     build: .
+    user: "${APP_UID:-1000}:${APP_GID:-1000}"
     environment:
       DB_HOST: ${DB_HOST:-mysql:3306}
       DB_USER: ${DB_USER:-jpx_user}
