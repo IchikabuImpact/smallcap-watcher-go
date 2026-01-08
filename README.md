@@ -72,6 +72,7 @@ docker compose up -d
 ```
 
 `http://localhost:8282` を開くとレポートを確認できます（生成後）。
+HTML 出力は Docker ボリューム `output-data` に保存されます。
 
 ### 3. 初期化・シード・バッチ実行
 
