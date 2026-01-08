@@ -76,6 +76,8 @@ docker compose up -d
 DB と Web は分離したサービスとして起動します。将来的に KVS など別の永続化層へ差し替える場合は、
 `docker-compose.yml` の DB サービスと `env.config` の接続設定を変更するだけで済む構成です。
 
+出力ファイルを生成するまで Nginx は `403 Forbidden` を返します。`--batch --gen` 実行後にアクセスしてください。
+
 #### WSL (Ubuntu 24.04) の Docker 権限エラー対処
 
 `permission denied while trying to connect to the Docker daemon socket` が出る場合は、
@@ -108,6 +110,17 @@ docker run --rm -v "$PWD":/app -w /app golang:1.22-alpine sh -c "go mod tidy"
 docker compose build --no-cache app
 docker compose up -d
 ```
+
+#### `mkdir output/detail: permission denied` が出る場合
+
+`output/` の所有権が root になっていると書き込みに失敗します。以下で権限を揃えてから再実行してください。
+
+```bash
+mkdir -p output
+sudo chown -R "$(id -u)":"$(id -g)" output
+```
+
+その後に再度 `docker compose exec app /app/smallcap-watcher --batch --gen` を実行してください。
 
 ### 3. 初期化・シード・バッチ実行
 
