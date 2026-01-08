@@ -1,0 +1,6 @@
+requests
+jinja2
+requests
+jinja2
+pandas
+mysql-connector-python

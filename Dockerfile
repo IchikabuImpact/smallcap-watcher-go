@@ -21,6 +21,7 @@ COPY --from=builder /out/smallcap-watcher /app/smallcap-watcher
 COPY templates /app/templates
 COPY static /app/static
 COPY src /app/src
+COPY scripts /app/scripts
 
 RUN mkdir -p /app/output && chown -R appuser:appuser /app
 
