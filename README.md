@@ -72,6 +72,24 @@ docker compose up -d
 ```
 
 `http://localhost:8282` を開くとレポートを確認できます（生成後）。
+HTML 出力は Docker ボリューム `output-data` に保存されます。
+
+### 2.1. コンテナの破棄・作り直し
+
+```bash
+# 破棄（コンテナ + ボリュームも削除）
+docker compose down --volumes --remove-orphans
+
+# 作り直し（再ビルドして起動）
+docker compose up -d --build
+```
+
+DB や生成 HTML を保持したい場合は、ボリュームを残してコンテナだけ削除します。
+
+```bash
+docker compose down --remove-orphans
+docker compose up -d --build
+```
 
 ### 3. 初期化・シード・バッチ実行
 
