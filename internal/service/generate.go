@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"html/template"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -59,7 +60,7 @@ func GenerateHTML(db *sql.DB) error {
 		return err
 	}
 
-	if err := copyFile("static/style.css", "output/static/style.css"); err != nil {
+	if err := copyStaticAssets("static", "output/static"); err != nil {
 		return err
 	}
 
@@ -222,6 +223,26 @@ func copyFile(src, dst string) error {
 
 	_, err = out.ReadFrom(in)
 	return err
+}
+
+func copyStaticAssets(srcDir, dstDir string) error {
+	return filepath.WalkDir(srcDir, func(path string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		rel, err := filepath.Rel(srcDir, path)
+		if err != nil {
+			return err
+		}
+		if rel == "." {
+			return nil
+		}
+		target := filepath.Join(dstDir, rel)
+		if entry.IsDir() {
+			return os.MkdirAll(target, 0o755)
+		}
+		return copyFile(path, target)
+	})
 }
 
 func formatFloat(value sql.NullFloat64) string {
