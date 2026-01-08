@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JPX Smallcap Watcher</title>
+    <link rel="stylesheet" href="static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>JPX Smallcap Watcher</h1>
+            <p class="subtitle">Small Cap Stock Tracking Dashboard</p>
+        </header>
+
+        <main>
+            <div class="card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Ticker</th>
+                            <th>Company</th>
+                            <th class="sortable" data-sort-type="number">Price</th>
+                            <th>Prev Close</th>
+                            <th class="sortable" data-sort-type="number">Change</th>
+                            <th>Signal</th>
+                            <th class="sortable" data-sort-type="number">Vol</th>
+                            <th class="sortable" data-sort-type="number">PER</th>
+                            <th class="sortable" data-sort-type="number">PBR</th>
+                            <th>Yield</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stock in stocks %}
+                        <tr onclick="window.location.href='detail/{{ stock.ticker }}.html'" class="clickable-row">
+                            <td class="ticker">{{ stock.ticker }}</td>
+                            <td class="company">{{ stock.companyName }}</td>
+                            <td class="price" data-sort-value="{{ stock.currentPrice if stock.currentPrice else 0 }}">
+                                {{ "{:,.0f}".format(stock.currentPrice if stock.currentPrice else 0) }}
+                            </td>
+                            <td>{{ stock.previousClose }}</td>
+
+                            {% set change = stock.pricemovement | default(0) | float %}
+                            <td data-sort-value="{{ change }}"
+                                class="change {{ 'positive' if change > 0 else 'negative' if change < 0 else 'neutral' }}">
+                                {{ "{:+.2f}".format(change) }}%
+                            </td>
+
+                            <td class="signal {{ stock.signal_val.lower() if stock.signal_val else '' }}">
+                                <span class="badge">{{ stock.signal_val if stock.signal_val else '-' }}</span>
+                            </td>
+
+                            <td data-sort-value="{{ stock.volume if stock.volume else 0 }}">
+                                {{ "{:,.0f}".format(stock.volume if stock.volume else 0) }}</td>
+                            <td data-sort-value="{{ stock.per if stock.per else 0 }}">{{ stock.per }}</td>
+                            <td data-sort-value="{{ stock.pbr if stock.pbr else 0 }}">
+                                {{ "{:.2f}".format(stock.pbr if stock.pbr else 0) }}x</td>
+                            <td>{{ stock.dividendYield }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 IchikabuImpact</p>
+        </footer>
+    </div>
+    <script>
+        const table = document.querySelector("table");
+        const tbody = table.querySelector("tbody");
+        const sortableHeaders = table.querySelectorAll("th.sortable");
+        let currentSort = { index: null, direction: "asc" };
+
+        const getSortValue = (cell) => {
+            const rawValue = cell.dataset.sortValue ?? cell.textContent;
+            const normalized = rawValue.toString().replace(/[% ,]/g, "");
+            const numberValue = Number.parseFloat(normalized);
+            return Number.isNaN(numberValue) ? 0 : numberValue;
+        };
+
+        const updateSortIndicators = () => {
+            sortableHeaders.forEach((header, index) => {
+                header.classList.remove("sort-asc", "sort-desc");
+                if (index === currentSort.index) {
+                    header.classList.add(currentSort.direction === "asc" ? "sort-asc" : "sort-desc");
+                }
+            });
+        };
+
+        const sortRows = (index, direction) => {
+            const rows = Array.from(tbody.querySelectorAll("tr"));
+            rows.sort((rowA, rowB) => {
+                const valueA = getSortValue(rowA.children[index]);
+                const valueB = getSortValue(rowB.children[index]);
+                if (valueA === valueB) {
+                    return 0;
+                }
+                return direction === "asc" ? valueA - valueB : valueB - valueA;
+            });
+            rows.forEach((row) => tbody.appendChild(row));
+        };
+
+        sortableHeaders.forEach((header) => {
+            header.addEventListener("click", () => {
+                const index = Array.from(header.parentElement.children).indexOf(header);
+                const direction =
+                    currentSort.index === index && currentSort.direction === "asc" ? "desc" : "asc";
+                currentSort = { index, direction };
+                sortRows(index, direction);
+                updateSortIndicators();
+            });
+        });
+    </script>
+</body>
+
+</html>

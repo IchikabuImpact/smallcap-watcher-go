@@ -1,0 +1,269 @@
+@import url('https://fonts.googleapis.com/css2?family=Chalet+London&family=Roboto:wght@400;700;900&display=swap');
+
+/* Reset & Base */
+:root {
+    --text-primary: #ffffff;
+    --text-secondary: #cccccc;
+    --accent-color: #2f855a;
+    /* GTA green ish */
+    --glass-bg: rgba(0, 0, 0, 0.75);
+    --border-color: rgba(255, 255, 255, 0.2);
+    --selection-bar: rgba(255, 255, 255, 0.9);
+    --selection-text: #000000;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Roboto', sans-serif;
+    /* Fallback for Chalet */
+    background: url('background.png') no-repeat center center fixed;
+    background-size: cover;
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* Container */
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+    backdrop-filter: blur(0px);
+    /* Adjust based on preference */
+}
+
+/* Header */
+header {
+    text-align: left;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--text-primary);
+    text-transform: uppercase;
+}
+
+h1 {
+    font-size: 4rem;
+    font-weight: 900;
+    margin: 0;
+    letter-spacing: 2px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    font-style: italic;
+    /* GTA V Logo vibe */
+}
+
+.subtitle {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-top: 0.5rem;
+}
+
+/* Navigation / Links */
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 1.1rem;
+}
+
+.back-link:hover {
+    text-decoration: underline;
+}
+
+/* Layout - Glass Card */
+.card {
+    background: var(--glass-bg);
+    border-top: 2px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 0;
+    /* Square edges for that menu feel */
+    padding: 0;
+    /* No padding on container to let rows fill it */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+    margin-bottom: 3rem;
+}
+
+/* Tables */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 1.1rem;
+}
+
+thead {
+    background: rgba(0, 0, 0, 0.9);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+th {
+    padding: 1.2rem 1.5rem;
+    text-align: left;
+    font-weight: 700;
+    color: #888;
+    border-bottom: 1px solid #444;
+}
+
+th.sortable {
+    cursor: pointer;
+    padding-right: 2.5rem;
+    position: relative;
+}
+
+th.sortable::after {
+    content: "↕";
+    position: absolute;
+    right: 1rem;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+th.sortable.sort-asc::after {
+    content: "↑";
+    color: #fff;
+}
+
+th.sortable.sort-desc::after {
+    content: "↓";
+    color: #fff;
+}
+
+td {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.1s;
+}
+
+/* Row Hover Effect - The "Menu Selection" bar */
+tr.clickable-row {
+    cursor: pointer;
+}
+
+tr.clickable-row:hover {
+    background: var(--selection-bar);
+    color: var(--selection-text);
+    transform: scale(1.005);
+    /* Slight pop */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    font-weight: 900;
+}
+
+/* Specific Columns */
+.ticker {
+    font-weight: 900;
+    letter-spacing: 1px;
+}
+
+.price {
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 700;
+}
+
+/* Change Colors */
+.change {
+    font-weight: 900;
+}
+
+/* Ensure visibility on hover (black text) */
+tr.clickable-row:hover .change {
+    /* Keep colors but darken them slightly or make them bold */
+}
+
+.positive {
+    color: #2ecc71;
+}
+
+.negative {
+    color: #e74c3c;
+}
+
+.neutral {
+    color: #ecf0f1;
+}
+
+/* Invert colors on selection bar hover for readability? 
+   Actually, the green/red pops nicely against white bg too. */
+
+/* Badges */
+.badge {
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.badge.buy {
+    color: #2ecc71;
+    border: 1px solid #2ecc71;
+}
+
+.badge.sell {
+    color: #e74c3c;
+    border: 1px solid #e74c3c;
+}
+
+.badge.neutral {
+    color: #ccc;
+    border: 1px solid #ccc;
+}
+
+/* Detail Page Grid */
+.summary-grid {
+    display: flex;
+    justify-content: space-between;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.summary-item {
+    background: var(--glass-bg);
+    padding: 2rem;
+    flex: 1;
+    text-align: center;
+    border-top: 4px solid var(--text-primary);
+    /* Header bar style */
+    backdrop-filter: blur(5px);
+}
+
+.summary-item h3 {
+    text-transform: uppercase;
+    font-size: 1rem;
+    color: #aaa;
+    margin-bottom: 0.5rem;
+    letter-spacing: 2px;
+}
+
+.price-large {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 3rem;
+    font-weight: 900;
+}
+
+.ticker-header {
+    font-family: 'Roboto Mono', monospace;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.2rem 1rem;
+    border-radius: 4px;
+    margin-left: 1rem;
+    font-size: 0.6em;
+    vertical-align: middle;
+}
+
+footer {
+    text-align: center;
+    color: #666;
+    margin-top: 4rem;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+}

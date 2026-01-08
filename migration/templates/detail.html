@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ stock.companyName }} ({{ stock.ticker }}) - Detail</title>
+    <link rel="stylesheet" href="../static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <a href="../index.html" class="back-link">&larr; Back to List</a>
+            <h1>{{ stock.companyName }} <span class="ticker-header">{{ stock.ticker }}</span></h1>
+        </header>
+
+        <main>
+            <div class="summary-grid">
+                <div class="card summary-item">
+                    <h3>Current Price</h3>
+                    <p class="price-large">{{ "{:,.0f}".format(stock.currentPrice if stock.currentPrice else 0) }}</p>
+                </div>
+                <div class="card summary-item">
+                    <h3>Prev Close</h3>
+                    <p>{{ stock.previousClose }}</p>
+                </div>
+                <div class="card summary-item">
+                    <h3>Signal</h3>
+                    <span class="badge {{ stock.signal_val.lower() if stock.signal_val else '' }}">{{ stock.signal_val
+                        if
+                        stock.signal_val else '-' }}</span>
+                </div>
+                <div class="card summary-item">
+                    <h3>Market Cap</h3>
+                    <p>{{ stock.marketCap }}</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>History</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Price</th>
+                            <th>Change</th>
+                            <th>Signal</th>
+                            <th>Volume</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in history %}
+                        <tr>
+                            <td>{{ row.yymmdd }}</td>
+                            <td>{{ "{:,.0f}".format(row.currentPrice if row.currentPrice else 0) }}</td>
+
+                            {% set change = row.pricemovement | default(0) | float %}
+                            <td
+                                class="change {{ 'positive' if change > 0 else 'negative' if change < 0 else 'neutral' }}">
+                                {{ "{:+.2f}".format(change) }}%
+                            </td>
+
+                            <td class="signal {{ row.signal_val.lower() if row.signal_val else '' }}">
+                                {{ row.signal_val if row.signal_val else '-' }}
+                            </td>
+                            <td>{{ "{:,.0f}".format(row.volume if row.volume else 0) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+</body>
+
+</html>
