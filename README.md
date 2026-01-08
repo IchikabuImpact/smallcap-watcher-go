@@ -122,6 +122,20 @@ sudo chown -R "$(id -u)":"$(id -g)" output
 
 その後に再度 `docker compose exec app /app/smallcap-watcher --batch --gen` を実行してください。
 
+#### Rocky Linux などで `go mod download` が TLS timeout する場合
+
+`proxy.golang.org` への接続がタイムアウトする環境では、ビルド時に `GOPROXY` を切り替えてください。
+
+```bash
+docker compose build --build-arg GOPROXY=direct app
+```
+
+それでも解決しない場合は、一時的に `GOSUMDB=off` を併用してビルドできます。
+
+```bash
+docker compose build --build-arg GOPROXY=direct --build-arg GOSUMDB=off app
+```
+
 ### 3. 初期化・シード・バッチ実行
 
 ```bash
