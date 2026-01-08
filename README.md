@@ -91,6 +91,9 @@ sudo usermod -aG docker $USER
 # 変更を反映（WSL の再起動 or 新しいシェル起動）
 ```
 
+Docker Desktop と WSL 内 Docker Engine が混在しているとソケット接続で詰まることがあります。
+どちらか一方に統一してください（例: Windows 側は Docker Desktop、WSL 側は Docker Engine のみ運用）。
+
 ### 3. 初期化・シード・バッチ実行
 
 ```bash
