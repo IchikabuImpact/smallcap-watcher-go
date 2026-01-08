@@ -76,6 +76,21 @@ docker compose up -d
 DB と Web は分離したサービスとして起動します。将来的に KVS など別の永続化層へ差し替える場合は、
 `docker-compose.yml` の DB サービスと `env.config` の接続設定を変更するだけで済む構成です。
 
+#### WSL (Ubuntu 24.04) の Docker 権限エラー対処
+
+`permission denied while trying to connect to the Docker daemon socket` が出る場合は、
+Docker デーモン起動とソケット権限を確認してください。
+
+```bash
+# Docker デーモンを起動
+sudo systemctl enable --now docker
+
+# 現在のユーザーを docker グループへ追加
+sudo usermod -aG docker $USER
+
+# 変更を反映（WSL の再起動 or 新しいシェル起動）
+```
+
 ### 3. 初期化・シード・バッチ実行
 
 ```bash
