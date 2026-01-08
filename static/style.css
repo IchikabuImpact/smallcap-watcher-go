@@ -5,7 +5,8 @@
 
 body {
   margin: 0;
-  background: #f5f7fb;
+  background: #f5f7fb url("background.png") no-repeat center top;
+  background-size: cover;
   color: #1b1f2a;
 }
 

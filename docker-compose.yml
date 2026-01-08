@@ -27,9 +27,14 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
-    entrypoint: ["sh", "-c", "tail -f /dev/null"]
+    user: "0:0"
+    entrypoint: ["/bin/sh", "/app/scripts/ensure-output-perms.sh"]
+    command: ["tail", "-f", "/dev/null"]
     volumes:
-      - output-data:/app/output
+      - ./output:/app/output
+      - ./src:/app/src
+      - ./templates:/app/templates
+      - ./static:/app/static
       - ./env.config:/app/env.config:ro
 
   web:
@@ -38,8 +43,8 @@ services:
     ports:
       - "8282:80"
     volumes:
-      - output-data:/usr/share/nginx/html:ro
+      - ./output:/usr/share/nginx/html:ro
+      - ./static:/usr/share/nginx/html/static:ro
 
 volumes:
   mysql-data:
-  output-data:
