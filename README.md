@@ -71,4 +71,4 @@ cp env.config.sample env.config
 docker compose up -d
 ```
 
-`http://localhost:8282` を開くとレポートを確認できます（生成後）。
+`http://localhost:8083` を開くとレポートを確認できます（生成後）。
