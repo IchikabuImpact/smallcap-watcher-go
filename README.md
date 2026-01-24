@@ -12,7 +12,7 @@
 ## 必要要件
 
 - **Docker** / **Docker Compose**（推奨）
-- もしくは **Go 1.22+** と **MySQL 8.0+**
+- もしくは **Go 1.25+** と **MySQL 8.0+**
 
 ## Dockerのインストール（Ubuntu / RedHat系 Linux）
 

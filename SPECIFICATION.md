@@ -102,7 +102,7 @@ JPX（日本取引所グループ）の株価データを毎日取得し、監�
 - Docker利用時はホストの `output/` をバインドマウントし、ファイル配置時の Permission エラーを避けるためにパーミッションを調整する.
 
 ## 技術スタック
-- **Go**: 1.22+ (go.mod 参照).
+- **Go**: 1.25+ (go.mod 参照).
 - **主要ライブラリ**: `github.com/go-sql-driver/mysql`, 標準ライブラリの `net/http`, `html/template`.
 - **インフラ**: MySQL 8.0.
 - **配信**: 任意の静的Webサーバー.
