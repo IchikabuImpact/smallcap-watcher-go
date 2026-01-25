@@ -11,8 +11,7 @@
 
 ## 必要要件
 
-- **Docker** / **Docker Compose**（推奨）
-- もしくは **Go 1.25+** と **MySQL 8.0+**
+- **Docker** / **Docker Compose**
 
 ## Dockerのインストール（Ubuntu / RedHat系 Linux）
 
@@ -56,7 +55,7 @@ sudo dnf install docker
 sudo systemctl enable --now docker
 ```
 
-## 使い方（Docker）
+## 使い方（Docker Compose）
 
 ### 1. 設定ファイルの準備
 
