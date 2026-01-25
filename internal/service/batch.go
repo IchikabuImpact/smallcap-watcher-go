@@ -15,13 +15,13 @@ type WatchRow struct {
 	Ticker string
 }
 
-func RunBatch(db *sql.DB) error {
+func RunBatch(db *sql.DB, scraperBaseURL string) error {
 	tickers, err := loadTickers(db)
 	if err != nil {
 		return err
 	}
 
-	client := api.NewClient()
+	client := api.NewClientWithBaseURL(scraperBaseURL)
 	ctx := context.Background()
 
 	for _, ticker := range tickers {

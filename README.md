@@ -65,56 +65,45 @@ cp env.config.sample env.config
 
 必要に応じて `env.config` を編集してください。`env.config` が存在しない場合はデフォルト値で動作します。Docker実行時は `env.config` をコンテナへマウントします。
 
+特に、取得先のスクレイパーは `SCRAPER_BASE_URL` で切り替えできます。
+
+- ローカル開発: `http://127.0.0.1:8085`
+- Docker からホスト上のスクレイパーにアクセスする場合: `http://host.docker.internal:8085`
+
 ### 2. コンテナ起動（DB + Web）
 
 ```bash
 docker compose up -d
 ```
 
-`http://localhost:8083` を開くとレポートを確認できます（生成後）。
+`http://localhost:8183` を開くとレポートを確認できます（生成後）。
 
-## リバースプロキシ運用時の 502 対策（重要）
-
-同一ホスト上で複数の Docker Compose を動かしている場合、リバースプロキシの upstream 指定ミスで 502 が発生しがちです。
-以下の原則に沿って upstream を指定してください。
-
-### プロキシが「コンテナ内」で動いている場合
-
-- **原則：Docker Compose の service 名で接続する**
-  - 例: `proxy_pass http://web:80;`（この Compose 内の `web` サービス）
-  - 例: `proxy_pass http://app:8085;`（この Compose 内の `app` サービス）
-- **`host.docker.internal` を使う必要がある場合**
-  - Linux では名前解決できないことがあるため、`extra_hosts` に以下を追加します。
-
-```yaml
-services:
-  proxy:
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-```
-
-### プロキシが「ホスト OS 上」で動いている場合
-
-- **原則：公開ポート（ports で publish しているポート）に向ける**
-  - 例: `proxy_pass http://127.0.0.1:8183;`（`web` サービスの公開ポート）
-  - 例: `proxy_pass http://127.0.0.1:8085;`（別スタックの公開ポート）
-
-### 502 を解消するための確認手順（例）
+### 3. 初回のみ: DB初期化と監視銘柄の投入
 
 ```bash
-docker compose ps
-docker compose logs -n 200 web
-docker compose logs -n 200 app
-
-# プロキシがホスト上の場合（nginx / apache）
-sudo nginx -T
-sudo apachectl -S
-sudo apachectl -t -D DUMP_VHOSTS
-
-# プロキシがコンテナ内の場合
-docker exec -it <proxy_container> sh
-curl -v http://<upstream>:<port>/
-
-# ホストから公開ポート到達を確認
-curl -v http://127.0.0.1:<published_port>/
+docker compose run --rm app --init
+docker compose run --rm app --seed
 ```
+
+### 4. 日次/都度の更新
+
+```bash
+# 取得のみ
+docker compose run --rm app --batch
+
+# 取得 + HTML生成
+docker compose run --rm app --batch --gen
+```
+
+### 5. 取得APIの疎通確認（コンテナ内から）
+
+```bash
+docker compose run --rm app sh -c 'set -a; . /app/env.config; set +a; curl -sS "$SCRAPER_BASE_URL/scrape?ticker=5020"'
+```
+
+200 応答で JSON が返ることを確認してください。
+
+## リバースプロキシ運用の補足
+
+同一ホスト上で複数の Docker Compose を動かしている場合、リバースプロキシの upstream 指定で 502 が発生しがちです。
+プロキシがコンテナ内なら service 名、ホスト上なら公開ポートに向けてください。

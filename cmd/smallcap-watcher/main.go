@@ -45,7 +45,7 @@ func main() {
 	}
 
 	if *batchFlag {
-		if err := service.RunBatch(database); err != nil {
+		if err := service.RunBatch(database, cfg.ScraperBaseURL); err != nil {
 			log.Fatalf("failed to run batch: %v", err)
 		}
 		log.Println("batch completed")
