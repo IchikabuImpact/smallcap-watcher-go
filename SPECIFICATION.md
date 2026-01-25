@@ -8,7 +8,7 @@ JPX（日本取引所グループ）の株価データを毎日取得し、監�
 ## システム構成
 - **バッチ実行**: `cmd/smallcap-watcher/main.go` のCLIで各処理を実行 (`--init`, `--batch`, `--gen`, `--seed`).
 - **データ取得 API**: `https://jpx.pinkgold.space/scrape?ticker={ticker}` (`internal/api/client.go`).
-- **データ保存**: MySQL 8.0 (Dockerコンテナまたはローカル環境).
+- **データ保存**: MySQL 8.0 (Docker Compose で起動するコンテナ).
 - **HTML生成**: Go `html/template` (`templates/`) から `output/` に静的HTMLを出力.
 - **配信**: 任意のWebサーバーで `output/` を静的配信.
 
@@ -85,8 +85,7 @@ JPX（日本取引所グループ）の株価データを毎日取得し、監�
 - 監視対象の銘柄は `src/tickers1.tsv` で管理.
 - `SeedWatchList` で `watch_list` へ upsert (INSERT ... ON DUPLICATE KEY UPDATE).
 
-## 実行コマンド
-### Docker Compose で実行（推奨）
+## 実行コマンド（Docker Compose）
 事前に `env.config` を用意し、DB を起動してから実行します。
 
 ```bash
@@ -104,55 +103,6 @@ docker compose run --rm app --init
 docker compose run --rm app --seed
 docker compose run --rm app --gen
 ```
-
-### Docker build + docker run で実行（composeを使わない場合）
-MySQL を別コンテナで用意し、同一ネットワークに接続して実行します。
-
-```bash
-# アプリイメージ作成
-docker build -t smallcap-watcher-go .
-
-# DB用ネットワーク作成（1回だけ）
-docker network create smallcap-watcher-go-net
-
-# MySQL起動（例）
-docker run -d --name smallcap-mysql --network smallcap-watcher-go-net \
-  -e MYSQL_ROOT_PASSWORD=rootpassword \
-  -e MYSQL_DATABASE=jpx_data \
-  -e MYSQL_USER=jpx_user \
-  -e MYSQL_PASSWORD=jpx_password \
-  mysql:8.0
-
-# バッチ実行（必須例）
-docker run --rm --network smallcap-watcher-go-net \
-  -e DB_HOST=smallcap-mysql:3306 \
-  -e DB_USER=jpx_user \
-  -e DB_PASSWORD=jpx_password \
-  -e DB_NAME=jpx_data \
-  -v "$(pwd)/output:/app/output" \
-  -v "$(pwd)/env.config:/app/env.config:ro" \
-  smallcap-watcher-go --batch
-
-# 参考: init/seed/gen も同様に実行
-docker run --rm --network smallcap-watcher-go-net \
-  -e DB_HOST=smallcap-mysql:3306 -e DB_USER=jpx_user -e DB_PASSWORD=jpx_password -e DB_NAME=jpx_data \
-  -v "$(pwd)/output:/app/output" -v "$(pwd)/env.config:/app/env.config:ro" \
-  smallcap-watcher-go --init
-docker run --rm --network smallcap-watcher-go-net \
-  -e DB_HOST=smallcap-mysql:3306 -e DB_USER=jpx_user -e DB_PASSWORD=jpx_password -e DB_NAME=jpx_data \
-  -v "$(pwd)/output:/app/output" -v "$(pwd)/env.config:/app/env.config:ro" \
-  smallcap-watcher-go --seed
-docker run --rm --network smallcap-watcher-go-net \
-  -e DB_HOST=smallcap-mysql:3306 -e DB_USER=jpx_user -e DB_PASSWORD=jpx_password -e DB_NAME=jpx_data \
-  -v "$(pwd)/output:/app/output" -v "$(pwd)/env.config:/app/env.config:ro" \
-  smallcap-watcher-go --gen
-```
-
-### ローカル Go 実行（参考）
-- `go run ./cmd/smallcap-watcher --init` : DB初期化 (テーブル作成).
-- `go run ./cmd/smallcap-watcher --batch` : データ取得とDB更新.
-- `go run ./cmd/smallcap-watcher --gen` : HTML生成.
-- `go run ./cmd/smallcap-watcher --seed` : 監視銘柄の初期投入/更新.
 
 ## データ初期化・生成・デイリーバッチ
 - **データ初期化**: `--init` でテーブル作成後、`--seed` で `src/tickers1.tsv` を投入.
