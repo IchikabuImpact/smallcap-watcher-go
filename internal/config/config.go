@@ -7,19 +7,21 @@ import (
 )
 
 type Config struct {
-	DBHost     string
-	DBUser     string
-	DBPassword string
-	DBName     string
+	DBHost         string
+	DBUser         string
+	DBPassword     string
+	DBName         string
+	ScraperBaseURL string
 }
 
 func Load() Config {
 	loadConfigFile("env.config")
 	return Config{
-		DBHost:     getEnv("DB_HOST", "localhost"),
-		DBUser:     getEnv("DB_USER", "jpx_user"),
-		DBPassword: getEnv("DB_PASSWORD", "jpx_password"),
-		DBName:     getEnv("DB_NAME", "jpx_data"),
+		DBHost:         getEnv("DB_HOST", "localhost"),
+		DBUser:         getEnv("DB_USER", "jpx_user"),
+		DBPassword:     getEnv("DB_PASSWORD", "jpx_password"),
+		DBName:         getEnv("DB_NAME", "jpx_data"),
+		ScraperBaseURL: getEnv("SCRAPER_BASE_URL", "http://127.0.0.1:8085"),
 	}
 }
 

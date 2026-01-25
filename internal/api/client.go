@@ -5,8 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 )
+
+const defaultBaseURL = "http://127.0.0.1:8085"
 
 type StockResponse struct {
 	Ticker        string `json:"ticker"`
@@ -26,8 +29,17 @@ type Client struct {
 }
 
 func NewClient() *Client {
+	return NewClientWithBaseURL(defaultBaseURL)
+}
+
+func NewClientWithBaseURL(baseURL string) *Client {
+	trimmed := strings.TrimSpace(baseURL)
+	if trimmed == "" {
+		trimmed = defaultBaseURL
+	}
+	trimmed = strings.TrimRight(trimmed, "/")
 	return &Client{
-		BaseURL: "https://jpx.pinkgold.space",
+		BaseURL: trimmed,
 		HTTPClient: &http.Client{
 			Timeout: 15 * time.Second,
 		},

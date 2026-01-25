@@ -7,7 +7,7 @@ JPX（日本取引所グループ）の株価データを毎日取得し、監�
 
 ## システム構成
 - **バッチ実行**: `cmd/smallcap-watcher/main.go` のCLIで各処理を実行 (`--init`, `--batch`, `--gen`, `--seed`).
-- **データ取得 API**: `https://jpx.pinkgold.space/scrape?ticker={ticker}` (`internal/api/client.go`).
+- **データ取得 API**: `SCRAPER_BASE_URL/scrape?ticker={ticker}`。`SCRAPER_BASE_URL` は環境変数で切り替え（デフォルト: `http://127.0.0.1:8085`）。 (`internal/api/client.go`).
 - **データ保存**: MySQL 8.0 (Docker Compose で起動するコンテナ).
 - **HTML生成**: Go `html/template` (`templates/`) から `output/` に静的HTMLを出力.
 - **配信**: 任意のWebサーバーで `output/` を静的配信.
@@ -44,6 +44,7 @@ JPX（日本取引所グループ）の株価データを毎日取得し、監�
 ## DB仕様
 - **DBMS**: MySQL 8.0
 - **接続情報**: 環境変数 `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` (デフォルトは `internal/config/config.go` を参照).
+- **取得API切替**: 環境変数 `SCRAPER_BASE_URL` で取得先を切り替える.
 - **スキーマ**: `watch_list`, `watch_detail` の2テーブル.
 - **スキーマ初期化**: `db.InitSchema` が `CREATE TABLE IF NOT EXISTS` を実行 (`internal/db/db.go`).
 
@@ -86,22 +87,24 @@ JPX（日本取引所グループ）の株価データを毎日取得し、監�
 - `SeedWatchList` で `watch_list` へ upsert (INSERT ... ON DUPLICATE KEY UPDATE).
 
 ## 実行コマンド（Docker Compose）
-事前に `env.config` を用意し、DB を起動してから実行します。
+事前に `env.config` を用意し、Docker Compose を起動してから実行します。
 
 ```bash
 # 設定ファイル（任意）
 cp env.config.sample env.config
 
-# DB起動（必要なら）
-docker compose up -d mysql
+# DB + Web 起動
+docker compose up -d
 
-# バッチ実行（必須例）
-docker compose run --rm app --batch
-
-# 参考: init/seed/gen も同様に実行
+# 初回のみ
 docker compose run --rm app --init
 docker compose run --rm app --seed
-docker compose run --rm app --gen
+
+# バッチ実行
+docker compose run --rm app --batch
+
+# バッチ + HTML生成
+docker compose run --rm app --batch --gen
 ```
 
 ## データ初期化・生成・デイリーバッチ
