@@ -6,13 +6,15 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
 
 const defaultBaseURL = "http://127.0.0.1:8085"
-const maxRetries = 3
-const retryBaseDelay = 750 * time.Millisecond
+const maxRetries = 6
+const retryBaseDelay = 1 * time.Second
+const maxRetryDelay = 15 * time.Second
 const maxErrorBody = 2048
 
 type StockResponse struct {
@@ -65,7 +67,7 @@ func (c *Client) FetchStockData(ctx context.Context, ticker string) (StockRespon
 			if !shouldRetry(attempt, 0) {
 				break
 			}
-			time.Sleep(retryDelay(attempt))
+			time.Sleep(retryDelay(attempt, 0))
 			continue
 		}
 
@@ -80,7 +82,8 @@ func (c *Client) FetchStockData(ctx context.Context, ticker string) (StockRespon
 			if !shouldRetry(attempt, resp.StatusCode) {
 				break
 			}
-			time.Sleep(retryDelay(attempt))
+			retryAfter := parseRetryAfter(resp.Header.Get("Retry-After"))
+			time.Sleep(retryDelay(attempt, retryAfter))
 			continue
 		}
 
@@ -110,6 +113,33 @@ func shouldRetry(attempt int, statusCode int) bool {
 	}
 }
 
-func retryDelay(attempt int) time.Duration {
-	return retryBaseDelay * time.Duration(1<<attempt)
+func retryDelay(attempt int, retryAfter time.Duration) time.Duration {
+	delay := retryBaseDelay * time.Duration(1<<attempt)
+	if delay > maxRetryDelay {
+		delay = maxRetryDelay
+	}
+	if retryAfter > delay {
+		if retryAfter > maxRetryDelay {
+			return maxRetryDelay
+		}
+		return retryAfter
+	}
+	return delay
+}
+
+func parseRetryAfter(value string) time.Duration {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return 0
+	}
+	if seconds, err := strconv.Atoi(trimmed); err == nil && seconds > 0 {
+		return time.Duration(seconds) * time.Second
+	}
+	if retryAt, err := http.ParseTime(trimmed); err == nil {
+		wait := time.Until(retryAt)
+		if wait > 0 {
+			return wait
+		}
+	}
+	return 0
 }
