@@ -86,6 +86,69 @@ JPX（日本取引所グループ）の株価データを毎日取得し、監�
 - `SeedWatchList` で `watch_list` へ upsert (INSERT ... ON DUPLICATE KEY UPDATE).
 
 ## 実行コマンド
+### Docker Compose で実行（推奨）
+事前に `env.config` を用意し、DB を起動してから実行します。
+
+```bash
+# 設定ファイル（任意）
+cp env.config.sample env.config
+
+# DB起動（必要なら）
+docker compose up -d mysql
+
+# バッチ実行（必須例）
+docker compose run --rm app --batch
+
+# 参考: init/seed/gen も同様に実行
+docker compose run --rm app --init
+docker compose run --rm app --seed
+docker compose run --rm app --gen
+```
+
+### Docker build + docker run で実行（composeを使わない場合）
+MySQL を別コンテナで用意し、同一ネットワークに接続して実行します。
+
+```bash
+# アプリイメージ作成
+docker build -t smallcap-watcher-go .
+
+# DB用ネットワーク作成（1回だけ）
+docker network create smallcap-watcher-go-net
+
+# MySQL起動（例）
+docker run -d --name smallcap-mysql --network smallcap-watcher-go-net \
+  -e MYSQL_ROOT_PASSWORD=rootpassword \
+  -e MYSQL_DATABASE=jpx_data \
+  -e MYSQL_USER=jpx_user \
+  -e MYSQL_PASSWORD=jpx_password \
+  mysql:8.0
+
+# バッチ実行（必須例）
+docker run --rm --network smallcap-watcher-go-net \
+  -e DB_HOST=smallcap-mysql:3306 \
+  -e DB_USER=jpx_user \
+  -e DB_PASSWORD=jpx_password \
+  -e DB_NAME=jpx_data \
+  -v "$(pwd)/output:/app/output" \
+  -v "$(pwd)/env.config:/app/env.config:ro" \
+  smallcap-watcher-go --batch
+
+# 参考: init/seed/gen も同様に実行
+docker run --rm --network smallcap-watcher-go-net \
+  -e DB_HOST=smallcap-mysql:3306 -e DB_USER=jpx_user -e DB_PASSWORD=jpx_password -e DB_NAME=jpx_data \
+  -v "$(pwd)/output:/app/output" -v "$(pwd)/env.config:/app/env.config:ro" \
+  smallcap-watcher-go --init
+docker run --rm --network smallcap-watcher-go-net \
+  -e DB_HOST=smallcap-mysql:3306 -e DB_USER=jpx_user -e DB_PASSWORD=jpx_password -e DB_NAME=jpx_data \
+  -v "$(pwd)/output:/app/output" -v "$(pwd)/env.config:/app/env.config:ro" \
+  smallcap-watcher-go --seed
+docker run --rm --network smallcap-watcher-go-net \
+  -e DB_HOST=smallcap-mysql:3306 -e DB_USER=jpx_user -e DB_PASSWORD=jpx_password -e DB_NAME=jpx_data \
+  -v "$(pwd)/output:/app/output" -v "$(pwd)/env.config:/app/env.config:ro" \
+  smallcap-watcher-go --gen
+```
+
+### ローカル Go 実行（参考）
 - `go run ./cmd/smallcap-watcher --init` : DB初期化 (テーブル作成).
 - `go run ./cmd/smallcap-watcher --batch` : データ取得とDB更新.
 - `go run ./cmd/smallcap-watcher --gen` : HTML生成.
