@@ -7,7 +7,7 @@ JPX（日本取引所グループ）の株価データを毎日取得し、監�
 
 ## システム構成
 - **バッチ実行**: `main.py` で各処理を実行 (`--init`, `--batch`, `--gen`).
-- **データ取得 API**: `https://jpx.pinkgold.space/scrape?ticker={ticker}` (`src/api.py`).
+- **データ取得 API**: `https://jpx-indicator.pinkgold.space/scrape?ticker={ticker}` (`src/api.py`).
 - **データ保存**: MySQL 8.0 (Dockerコンテナまたはローカル環境).
 - **HTML生成**: Jinja2 テンプレート (`templates/`) から `output/` に静的HTMLを出力.
 - **配信**: Docker構成では Nginx が `output/` を配信.
