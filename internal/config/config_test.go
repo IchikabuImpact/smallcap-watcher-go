@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 func TestLoadUsesConfigFileWhenPresent(t *testing.T) {
@@ -11,7 +12,7 @@ func TestLoadUsesConfigFileWhenPresent(t *testing.T) {
 	workDir := t.TempDir()
 	configPath := filepath.Join(workDir, "env.config")
 
-	content := []byte("DB_HOST=filehost:3306\nDB_USER=fileuser\nDB_PASSWORD=filepass\nDB_NAME=filename\nSCRAPER_BASE_URL=http://file-scraper:8082\n")
+	content := []byte("DB_HOST=filehost:3306\nDB_USER=fileuser\nDB_PASSWORD=filepass\nDB_NAME=filename\nSCRAPER_BASE_URL=http://file-scraper:8082\nSCRAPER_REQUEST_INTERVAL=4s\n")
 	if err := os.WriteFile(configPath, content, 0o644); err != nil {
 		t.Fatalf("write env.config: %v", err)
 	}
@@ -45,6 +46,9 @@ func TestLoadUsesConfigFileWhenPresent(t *testing.T) {
 	if cfg.ScraperBaseURL != "http://file-scraper:8082" {
 		t.Fatalf("ScraperBaseURL = %q", cfg.ScraperBaseURL)
 	}
+	if cfg.ScraperRequestInterval != 4*time.Second {
+		t.Fatalf("ScraperRequestInterval = %s", cfg.ScraperRequestInterval)
+	}
 }
 
 func TestLoadEnvOverridesConfigFile(t *testing.T) {
@@ -52,7 +56,7 @@ func TestLoadEnvOverridesConfigFile(t *testing.T) {
 	workDir := t.TempDir()
 	configPath := filepath.Join(workDir, "env.config")
 
-	content := []byte("DB_HOST=filehost:3306\nDB_USER=fileuser\nDB_PASSWORD=filepass\nDB_NAME=filename\nSCRAPER_BASE_URL=http://file-scraper:8082\n")
+	content := []byte("DB_HOST=filehost:3306\nDB_USER=fileuser\nDB_PASSWORD=filepass\nDB_NAME=filename\nSCRAPER_BASE_URL=http://file-scraper:8082\nSCRAPER_REQUEST_INTERVAL=4s\n")
 	if err := os.WriteFile(configPath, content, 0o644); err != nil {
 		t.Fatalf("write env.config: %v", err)
 	}
@@ -74,6 +78,7 @@ func TestLoadEnvOverridesConfigFile(t *testing.T) {
 	t.Setenv("DB_PASSWORD", "envpass")
 	t.Setenv("DB_NAME", "envname")
 	t.Setenv("SCRAPER_BASE_URL", "http://env-scraper:8082")
+	t.Setenv("SCRAPER_REQUEST_INTERVAL", "5s")
 
 	cfg := Load()
 
@@ -91,6 +96,9 @@ func TestLoadEnvOverridesConfigFile(t *testing.T) {
 	}
 	if cfg.ScraperBaseURL != "http://env-scraper:8082" {
 		t.Fatalf("ScraperBaseURL = %q", cfg.ScraperBaseURL)
+	}
+	if cfg.ScraperRequestInterval != 5*time.Second {
+		t.Fatalf("ScraperRequestInterval = %s", cfg.ScraperRequestInterval)
 	}
 }
 
@@ -126,11 +134,14 @@ func TestLoadDefaultsWithoutConfigFile(t *testing.T) {
 	if cfg.ScraperBaseURL != "http://127.0.0.1:8082" {
 		t.Fatalf("ScraperBaseURL = %q", cfg.ScraperBaseURL)
 	}
+	if cfg.ScraperRequestInterval != 3*time.Second {
+		t.Fatalf("ScraperRequestInterval = %s", cfg.ScraperRequestInterval)
+	}
 }
 
 func resetEnv(t *testing.T) {
 	t.Helper()
-	keys := []string{"DB_HOST", "DB_USER", "DB_PASSWORD", "DB_NAME", "SCRAPER_BASE_URL"}
+	keys := []string{"DB_HOST", "DB_USER", "DB_PASSWORD", "DB_NAME", "SCRAPER_BASE_URL", "SCRAPER_REQUEST_INTERVAL"}
 	for _, key := range keys {
 		if err := os.Unsetenv(key); err != nil {
 			t.Fatalf("unset %s: %v", key, err)

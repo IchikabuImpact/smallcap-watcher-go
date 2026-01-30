@@ -4,24 +4,27 @@ import (
 	"bufio"
 	"os"
 	"strings"
+	"time"
 )
 
 type Config struct {
-	DBHost         string
-	DBUser         string
-	DBPassword     string
-	DBName         string
-	ScraperBaseURL string
+	DBHost                 string
+	DBUser                 string
+	DBPassword             string
+	DBName                 string
+	ScraperBaseURL         string
+	ScraperRequestInterval time.Duration
 }
 
 func Load() Config {
 	loadConfigFile("env.config")
 	return Config{
-		DBHost:         getEnv("DB_HOST", "localhost"),
-		DBUser:         getEnv("DB_USER", "jpx_user"),
-		DBPassword:     getEnv("DB_PASSWORD", "jpx_password"),
-		DBName:         getEnv("DB_NAME", "jpx_data"),
-		ScraperBaseURL: getEnv("SCRAPER_BASE_URL", "http://127.0.0.1:8082"),
+		DBHost:                 getEnv("DB_HOST", "localhost"),
+		DBUser:                 getEnv("DB_USER", "jpx_user"),
+		DBPassword:             getEnv("DB_PASSWORD", "jpx_password"),
+		DBName:                 getEnv("DB_NAME", "jpx_data"),
+		ScraperBaseURL:         getEnv("SCRAPER_BASE_URL", "http://127.0.0.1:8082"),
+		ScraperRequestInterval: getEnvDuration("SCRAPER_REQUEST_INTERVAL", 3*time.Second),
 	}
 }
 
@@ -56,6 +59,15 @@ func loadConfigFile(path string) {
 func getEnv(key, fallback string) string {
 	if value := os.Getenv(key); value != "" {
 		return value
+	}
+	return fallback
+}
+
+func getEnvDuration(key string, fallback time.Duration) time.Duration {
+	if value := os.Getenv(key); value != "" {
+		if duration, err := time.ParseDuration(value); err == nil {
+			return duration
+		}
 	}
 	return fallback
 }

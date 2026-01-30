@@ -65,7 +65,7 @@ cp env.config.sample env.config
 
 必要に応じて `env.config` を編集してください。`env.config` が存在しない場合はデフォルト値で動作します。Docker実行時は `env.config` をコンテナへマウントします。
 
-特に、取得先のスクレイパーは `SCRAPER_BASE_URL` で切り替えできます。
+特に、取得先のスクレイパーは `SCRAPER_BASE_URL` で切り替えできます。`SCRAPER_REQUEST_INTERVAL` を指定すると、スクレイパーへのアクセス間隔を調整できます（例: `3s`）。
 
 - ローカル開発: `http://127.0.0.1:8082`
 - Docker からホスト上のスクレイパーにアクセスする場合: `http://host.docker.internal:8082`
