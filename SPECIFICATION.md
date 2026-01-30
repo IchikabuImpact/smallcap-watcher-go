@@ -7,7 +7,7 @@ JPX（日本取引所グループ）の株価データを毎日取得し、監�
 
 ## システム構成
 - **バッチ実行**: `cmd/smallcap-watcher/main.go` のCLIで各処理を実行 (`--init`, `--batch`, `--gen`, `--seed`).
-- **データ取得 API**: `SCRAPER_BASE_URL/scrape?ticker={ticker}`。`SCRAPER_BASE_URL` は環境変数で切り替え（デフォルト: `http://127.0.0.1:8085`）。 (`internal/api/client.go`).
+- **データ取得 API**: `SCRAPER_BASE_URL/scrape?ticker={ticker}`。`SCRAPER_BASE_URL` は環境変数で切り替え（デフォルト: `http://127.0.0.1:8082`）。 (`internal/api/client.go`).
 - **データ保存**: MySQL 8.0 (Docker Compose で起動するコンテナ).
 - **HTML生成**: Go `html/template` (`templates/`) から `output/` に静的HTMLを出力.
 - **配信**: 任意のWebサーバーで `output/` を静的配信.
