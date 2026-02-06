@@ -131,7 +131,7 @@ func TestLoadDefaultsWithoutConfigFile(t *testing.T) {
 	if cfg.DBName != "jpx_data" {
 		t.Fatalf("DBName = %q", cfg.DBName)
 	}
-	if cfg.ScraperBaseURL != "http://127.0.0.1:8082" {
+	if cfg.ScraperBaseURL != "http://host.docker.internal:8085" {
 		t.Fatalf("ScraperBaseURL = %q", cfg.ScraperBaseURL)
 	}
 	if cfg.ScraperRequestInterval != 3*time.Second {
