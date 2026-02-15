@@ -103,6 +103,37 @@ docker compose run --rm app sh -c 'set -a; . /app/env.config; set +a; curl -sS "
 
 200 応答で JSON が返ることを確認してください。
 
+
+## トラブルシュート
+
+### `Access denied for user` が出る場合
+
+`Error 1045 (28000): Access denied for user ...` は、**ポート競合よりも認証情報の不一致**で起きることが多いです。
+特に、`mysql-data` ボリュームを使っていると、MySQL のユーザー情報は初回作成時の値が保持されます。
+
+以下で `env.config` の値に合わせて DB ユーザー権限を再設定できます。
+
+```bash
+./scripts/db-repair-auth.sh
+```
+
+その後、再実行してください。
+
+```bash
+docker compose run --rm app --batch --gen
+```
+
+### VPS 側でポート競合を確認したい場合
+
+このプロジェクトの MySQL はホスト `3312` を使います（`3312:3306`）。
+競合確認は以下でできます。
+
+```bash
+ss -ltnp | grep 3312
+```
+
+既に別プロセスが使っている場合は、`docker-compose.yml` の左側ポート（`3312`）を別番号に変更してください。
+
 ## リバースプロキシ運用の補足
 
 同一ホスト上で複数の Docker Compose を動かしている場合、リバースプロキシの upstream 指定で 502 が発生しがちです。
