@@ -26,8 +26,8 @@
               <th data-type="number">Price</th>
               <th data-type="text">Prev Close</th>
               <th data-type="number">Change</th>
-              <th data-type="text">Signal</th>
-              <th data-type="number">Vol</th>
+              <th class="col-signal" data-type="text">Signal</th>
+              <th class="col-volume" data-type="number">Vol</th>
               <th data-type="number">PER</th>
               <th data-type="number">PBR</th>
               <th data-type="number">Yield</th>
@@ -41,10 +41,10 @@
               <td class="price" data-value="{{if .CurrentPrice.Valid}}{{formatFloat .CurrentPrice}}{{end}}">{{formatFloat .CurrentPrice}}</td>
               <td data-value="{{.PreviousClose}}">{{.PreviousClose}}</td>
               <td class="change {{changeClass .PriceMovement}}" data-value="{{numericValue .PriceMovement}}">{{formatChange .PriceMovement}}</td>
-              <td class="signal {{signalClass .Signal}}" data-value="{{.Signal}}">
+              <td class="signal col-signal {{signalClass .Signal}}" data-value="{{.Signal}}">
                 <span class="badge">{{.Signal}}</span>
               </td>
-              <td data-value="{{if .Volume.Valid}}{{.Volume.Int64}}{{end}}">{{formatInt .Volume}}</td>
+              <td class="col-volume" data-value="{{if .Volume.Valid}}{{.Volume.Int64}}{{end}}">{{formatInt .Volume}}</td>
               <td data-value="{{numericValue .PER}}">{{formatPER .PER}}</td>
               <td data-value="{{if .PBR.Valid}}{{formatFloat .PBR}}{{end}}">{{formatPBR .PBR}}</td>
               <td data-value="{{numericValue .DividendYield}}">{{formatYield .DividendYield}}</td>

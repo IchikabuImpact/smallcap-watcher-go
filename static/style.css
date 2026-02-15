@@ -199,3 +199,13 @@ footer {
   color: #cbd5f5;
   text-align: center;
 }
+
+@media (max-width: 768px) {
+  .col-signal {
+    display: none;
+  }
+
+  .col-volume {
+    display: table-cell;
+  }
+}
