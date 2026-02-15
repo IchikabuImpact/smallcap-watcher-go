@@ -4,6 +4,12 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
+COMPOSE_ENV=(env -u DB_HOST -u DB_USER -u DB_PASSWORD -u DB_NAME -u MYSQL_ROOT_PASSWORD)
+COMPOSE_CMD=(docker compose)
+if [[ -f env.config ]]; then
+  COMPOSE_CMD+=(--env-file env.config)
+fi
+
 if [[ -f env.config ]]; then
   set -a
   # shellcheck disable=SC1091
@@ -26,6 +32,19 @@ EOSQL
 )
 
 echo "[INFO] Reconfiguring MySQL user '${DB_USER}' for database '${DB_NAME}'..."
-docker compose up -d mysql >/dev/null
-docker compose exec -T mysql mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" -e "$SQL"
+"${COMPOSE_ENV[@]}" "${COMPOSE_CMD[@]}" up -d mysql >/dev/null
+
+echo "[INFO] Waiting for MySQL to become ready..."
+"${COMPOSE_ENV[@]}" "${COMPOSE_CMD[@]}" exec -T mysql sh -lc '
+for i in $(seq 1 30); do
+  if mysqladmin ping -h127.0.0.1 -uroot -p"$MYSQL_ROOT_PASSWORD" --silent >/dev/null 2>&1; then
+    exit 0
+  fi
+  sleep 1
+done
+exit 1
+'
+
+"${COMPOSE_ENV[@]}" "${COMPOSE_CMD[@]}" exec -T mysql \
+  mysql -h127.0.0.1 -uroot -p"${MYSQL_ROOT_PASSWORD}" -e "$SQL"
 echo "[OK] Authentication settings have been repaired."
