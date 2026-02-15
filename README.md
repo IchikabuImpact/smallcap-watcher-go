@@ -120,6 +120,9 @@ env -u DB_HOST -u DB_USER -u DB_PASSWORD -u DB_NAME -u MYSQL_ROOT_PASSWORD docke
 ./scripts/db-repair-auth.sh
 ```
 
+このスクリプトは MySQL 再起動後に `healthy` 相当の状態まで待ってから権限修復 SQL を流すため、
+`Can't connect to local MySQL server through socket ...` の一時エラーを回避できます。
+
 その後、再実行してください。
 
 ```bash
