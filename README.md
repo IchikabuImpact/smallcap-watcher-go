@@ -73,7 +73,7 @@ cp env.config.sample env.config
 ### 2. コンテナ起動（DB + Web）
 
 ```bash
-docker compose up -d
+env -u DB_HOST -u DB_USER -u DB_PASSWORD -u DB_NAME -u MYSQL_ROOT_PASSWORD docker compose --env-file env.config up -d
 ```
 
 `http://localhost:8183` を開くとレポートを確認できます（生成後）。
@@ -81,24 +81,24 @@ docker compose up -d
 ### 3. 初回のみ: DB初期化と監視銘柄の投入
 
 ```bash
-docker compose run --rm app --init
-docker compose run --rm app --seed
+env -u DB_HOST -u DB_USER -u DB_PASSWORD -u DB_NAME -u MYSQL_ROOT_PASSWORD docker compose --env-file env.config run --rm app --init
+env -u DB_HOST -u DB_USER -u DB_PASSWORD -u DB_NAME -u MYSQL_ROOT_PASSWORD docker compose --env-file env.config run --rm app --seed
 ```
 
 ### 4. 日次/都度の更新
 
 ```bash
 # 取得のみ
-docker compose run --rm app --batch
+env -u DB_HOST -u DB_USER -u DB_PASSWORD -u DB_NAME -u MYSQL_ROOT_PASSWORD docker compose --env-file env.config run --rm app --batch
 
 # 取得 + HTML生成
-docker compose run --rm app --batch --gen
+env -u DB_HOST -u DB_USER -u DB_PASSWORD -u DB_NAME -u MYSQL_ROOT_PASSWORD docker compose --env-file env.config run --rm app --batch --gen
 ```
 
 ### 5. 取得APIの疎通確認（コンテナ内から）
 
 ```bash
-docker compose run --rm app sh -c 'set -a; . /app/env.config; set +a; curl -sS "$SCRAPER_BASE_URL/scrape?ticker=5020"'
+env -u DB_HOST -u DB_USER -u DB_PASSWORD -u DB_NAME -u MYSQL_ROOT_PASSWORD docker compose --env-file env.config run --rm app sh -c 'set -a; . /app/env.config; set +a; curl -sS "$SCRAPER_BASE_URL/scrape?ticker=5020"'
 ```
 
 200 応答で JSON が返ることを確認してください。
@@ -110,6 +110,9 @@ docker compose run --rm app sh -c 'set -a; . /app/env.config; set +a; curl -sS "
 
 `Error 1045 (28000): Access denied for user ...` は、**ポート競合よりも認証情報の不一致**で起きることが多いです。
 特に、`mysql-data` ボリュームを使っていると、MySQL のユーザー情報は初回作成時の値が保持されます。
+また、シェルに `DB_USER` などの環境変数が既に export されていると、`docker compose` の変数展開で `env.config` より優先され、意図しないユーザー（例: `jpx`）で接続してしまうことがあります。
+
+そのため README のコマンドは `env -u ... docker compose --env-file env.config ...` 形式にしており、DB 関連の環境変数を一度クリアしてから `env.config` の値を確実に使うようにしています。
 
 以下で `env.config` の値に合わせて DB ユーザー権限を再設定できます。
 
@@ -120,7 +123,7 @@ docker compose run --rm app sh -c 'set -a; . /app/env.config; set +a; curl -sS "
 その後、再実行してください。
 
 ```bash
-docker compose run --rm app --batch --gen
+env -u DB_HOST -u DB_USER -u DB_PASSWORD -u DB_NAME -u MYSQL_ROOT_PASSWORD docker compose --env-file env.config run --rm app --batch --gen
 ```
 
 ### VPS 側でポート競合を確認したい場合
