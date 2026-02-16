@@ -147,7 +147,10 @@ tr:last-child td {
 }
 
 .company {
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font-size: 0.55em;
+  line-height: 1.4;
 }
 
 .price {
