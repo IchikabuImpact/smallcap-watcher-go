@@ -3,8 +3,11 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"math/rand"
+	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -13,9 +16,15 @@ import (
 
 const defaultBaseURL = "http://host.docker.internal:8085"
 const maxRetries = 6
+
 const retryBaseDelay = 1 * time.Second
-const maxRetryDelay = 15 * time.Second
+const maxRetryDelay = 4 * time.Second
 const maxErrorBody = 2048
+const retryJitterMax = 250 * time.Millisecond
+
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
 
 type StockResponse struct {
 	Ticker        string `json:"ticker"`
@@ -64,7 +73,7 @@ func (c *Client) FetchStockData(ctx context.Context, ticker string) (StockRespon
 		resp, err := c.HTTPClient.Do(req)
 		if err != nil {
 			lastErr = err
-			if !shouldRetry(attempt, 0) {
+			if !shouldRetry(attempt, 0, err) {
 				break
 			}
 			time.Sleep(retryDelay(attempt, 0))
@@ -79,7 +88,7 @@ func (c *Client) FetchStockData(ctx context.Context, ticker string) (StockRespon
 
 		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 			lastErr = fmt.Errorf("unexpected status: %s for %s (body: %q)", resp.Status, url, strings.TrimSpace(string(body)))
-			if !shouldRetry(attempt, resp.StatusCode) {
+			if !shouldRetry(attempt, resp.StatusCode, nil) {
 				break
 			}
 			retryAfter := parseRetryAfter(resp.Header.Get("Retry-After"))
@@ -101,16 +110,25 @@ func (c *Client) FetchStockData(ctx context.Context, ticker string) (StockRespon
 	return StockResponse{}, lastErr
 }
 
-func shouldRetry(attempt int, statusCode int) bool {
+func shouldRetry(attempt int, statusCode int, err error) bool {
 	if attempt >= maxRetries {
 		return false
 	}
-	switch statusCode {
-	case 0, http.StatusBadGateway, http.StatusServiceUnavailable, http.StatusGatewayTimeout:
-		return true
-	default:
+	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			return true
+		}
+		var netErr net.Error
+		if errors.As(err, &netErr) {
+			return netErr.Timeout() || netErr.Temporary()
+		}
 		return false
 	}
+	switch statusCode {
+	case http.StatusBadGateway, http.StatusServiceUnavailable, http.StatusGatewayTimeout:
+		return true
+	}
+	return false
 }
 
 func retryDelay(attempt int, retryAfter time.Duration) time.Duration {
@@ -119,12 +137,9 @@ func retryDelay(attempt int, retryAfter time.Duration) time.Duration {
 		delay = maxRetryDelay
 	}
 	if retryAfter > delay {
-		if retryAfter > maxRetryDelay {
-			return maxRetryDelay
-		}
-		return retryAfter
+		delay = retryAfter
 	}
-	return delay
+	return delay + jitterDuration(retryJitterMax)
 }
 
 func parseRetryAfter(value string) time.Duration {
@@ -142,4 +157,11 @@ func parseRetryAfter(value string) time.Duration {
 		}
 	}
 	return 0
+}
+
+func jitterDuration(maxJitter time.Duration) time.Duration {
+	if maxJitter <= 0 {
+		return 0
+	}
+	return time.Duration(rand.Int63n(int64(maxJitter) + 1))
 }

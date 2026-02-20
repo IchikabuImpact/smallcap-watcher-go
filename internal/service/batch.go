@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"math/rand"
 	"time"
 
 	"smallcap-watcher-go/internal/api"
@@ -31,15 +32,20 @@ func RunBatch(db *sql.DB, scraperBaseURL string, requestInterval time.Duration) 
 		payload, err := client.FetchStockData(ctx, ticker)
 		if err != nil {
 			log.Printf("failed to fetch %s: %v", ticker, err)
-			continue
-		}
-
-		if err := updateStock(db, payload); err != nil {
+		} else if err := updateStock(db, payload); err != nil {
 			log.Printf("failed to update %s: %v", ticker, err)
 		}
+
+		time.Sleep(batchDelay())
 	}
 
 	return nil
+}
+
+func batchDelay() time.Duration {
+	const baseDelay = 2 * time.Second
+	const jitterMax = 700 * time.Millisecond
+	return baseDelay + time.Duration(rand.Int63n(int64(jitterMax)+1))
 }
 
 func loadTickers(db *sql.DB) ([]string, error) {
