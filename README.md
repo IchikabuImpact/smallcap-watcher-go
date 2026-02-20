@@ -95,6 +95,20 @@ env -u DB_HOST -u DB_USER -u DB_PASSWORD -u DB_NAME -u MYSQL_ROOT_PASSWORD docke
 env -u DB_HOST -u DB_USER -u DB_PASSWORD -u DB_NAME -u MYSQL_ROOT_PASSWORD docker compose --env-file env.config run --rm app --batch --gen
 ```
 
+### 4.1 crontab 設定例（推奨）
+
+`cron` はログインシェルの環境変数を引き継がない/一部だけ引き継ぐため、
+手動実行は成功するのに `cron` だけ `Access denied for user ...` になるケースがあります。
+`env -u ... --env-file env.config` を使い、毎回同じ認証情報で実行する設定を推奨します。
+
+```cron
+# JPX Smallcap Watcher (Go)
+# 平日 15:30〜15:49 のどこか1回（ランダムディレイ + flock で多重起動防止）
+30-49 15 * * 1-5 cd /var/www/jpx-smallcap-watcher && /usr/bin/flock -n /tmp/jpx-smallcap-watcher.lock bash -lc 'sleep $((RANDOM % 60)); env -u DB_HOST -u DB_USER -u DB_PASSWORD -u DB_NAME -u MYSQL_ROOT_PASSWORD /usr/bin/docker compose --env-file env.config run --rm app --batch --gen' >> /var/www/jpx-smallcap-watcher/cron.log 2>&1
+```
+
+※ 以前の `#37 15 ...` の行は先頭 `#` があるとコメント扱いになり、実行されません。
+
 ### 5. 取得APIの疎通確認（コンテナ内から）
 
 ```bash
