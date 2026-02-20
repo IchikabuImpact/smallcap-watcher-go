@@ -14,8 +14,9 @@ import (
 	"time"
 )
 
-const defaultBaseURL = "http://127.0.0.1:8085"
-const maxRetries = 3
+const defaultBaseURL = "http://host.docker.internal:8085"
+const maxRetries = 6
+
 const retryBaseDelay = 1 * time.Second
 const maxRetryDelay = 4 * time.Second
 const maxErrorBody = 2048

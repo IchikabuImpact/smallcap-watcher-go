@@ -16,7 +16,7 @@ type WatchRow struct {
 	Ticker string
 }
 
-func RunBatch(db *sql.DB, scraperBaseURL string) error {
+func RunBatch(db *sql.DB, scraperBaseURL string, requestInterval time.Duration) error {
 	tickers, err := loadTickers(db)
 	if err != nil {
 		return err
@@ -25,7 +25,10 @@ func RunBatch(db *sql.DB, scraperBaseURL string) error {
 	client := api.NewClientWithBaseURL(scraperBaseURL)
 	ctx := context.Background()
 
-	for _, ticker := range tickers {
+	for i, ticker := range tickers {
+		if i > 0 && requestInterval > 0 {
+			time.Sleep(requestInterval)
+		}
 		payload, err := client.FetchStockData(ctx, ticker)
 		if err != nil {
 			log.Printf("failed to fetch %s: %v", ticker, err)

@@ -2,7 +2,7 @@ import requests
 import json
 import re
 
-BASE_URL = "https://jpx.pinkgold.space/scrape"
+BASE_URL = "https://jpx-indicator.pinkgold.space/scrape"
 
 def fetch_stock_data(ticker):
     """

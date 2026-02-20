@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JPX Smallcap Watcher</title>
   <link rel="stylesheet" href="static/style.css">
+  <link rel="icon" type="image/svg+xml" href="static/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -25,9 +26,9 @@
               <th data-type="text">Company</th>
               <th data-type="number">Price</th>
               <th data-type="text">Prev Close</th>
+              <th class="col-volume" data-type="number">Vol</th>
               <th data-type="number">Change</th>
-              <th data-type="text">Signal</th>
-              <th data-type="number">Vol</th>
+              <th class="col-signal" data-type="text">Signal</th>
               <th data-type="number">PER</th>
               <th data-type="number">PBR</th>
               <th data-type="number">Yield</th>
@@ -40,11 +41,11 @@
               <td class="company" data-value="{{.CompanyName}}">{{.CompanyName}}</td>
               <td class="price" data-value="{{if .CurrentPrice.Valid}}{{formatFloat .CurrentPrice}}{{end}}">{{formatFloat .CurrentPrice}}</td>
               <td data-value="{{.PreviousClose}}">{{.PreviousClose}}</td>
+              <td class="col-volume" data-value="{{if .Volume.Valid}}{{.Volume.Int64}}{{end}}">{{formatInt .Volume}}</td>
               <td class="change {{changeClass .PriceMovement}}" data-value="{{numericValue .PriceMovement}}">{{formatChange .PriceMovement}}</td>
-              <td class="signal {{signalClass .Signal}}" data-value="{{.Signal}}">
+              <td class="signal col-signal {{signalClass .Signal}}" data-value="{{.Signal}}">
                 <span class="badge">{{.Signal}}</span>
               </td>
-              <td data-value="{{if .Volume.Valid}}{{.Volume.Int64}}{{end}}">{{formatInt .Volume}}</td>
               <td data-value="{{numericValue .PER}}">{{formatPER .PER}}</td>
               <td data-value="{{if .PBR.Valid}}{{formatFloat .PBR}}{{end}}">{{formatPBR .PBR}}</td>
               <td data-value="{{numericValue .DividendYield}}">{{formatYield .DividendYield}}</td>

@@ -147,7 +147,10 @@ tr:last-child td {
 }
 
 .company {
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font-size: 0.55em;
+  line-height: 1.4;
 }
 
 .price {
@@ -198,4 +201,14 @@ footer {
   font-size: 12px;
   color: #cbd5f5;
   text-align: center;
+}
+
+@media (max-width: 768px) {
+  .col-signal {
+    display: none;
+  }
+
+  .col-volume {
+    display: table-cell;
+  }
 }
