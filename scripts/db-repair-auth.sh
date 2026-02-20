@@ -16,17 +16,32 @@ DB_USER="${DB_USER:-jpx_user}"
 DB_PASSWORD="${DB_PASSWORD:-jpx_password}"
 DB_NAME="${DB_NAME:-jpx_data}"
 MYSQL_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD:-rootpassword}"
+LEGACY_DB_USER="${LEGACY_DB_USER:-jpx}"
+
+EXTRA_SQL=""
+if [[ "${LEGACY_DB_USER}" != "${DB_USER}" ]]; then
+  EXTRA_SQL=$(cat <<SQL_EOF
+CREATE USER IF NOT EXISTS '${LEGACY_DB_USER}'@'%' IDENTIFIED BY '${DB_PASSWORD}';
+ALTER USER '${LEGACY_DB_USER}'@'%' IDENTIFIED BY '${DB_PASSWORD}';
+GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${LEGACY_DB_USER}'@'%';
+SQL_EOF
+)
+fi
 
 SQL=$(cat <<SQL_EOF
 CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 CREATE USER IF NOT EXISTS '${DB_USER}'@'%' IDENTIFIED BY '${DB_PASSWORD}';
 ALTER USER '${DB_USER}'@'%' IDENTIFIED BY '${DB_PASSWORD}';
 GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'%';
+${EXTRA_SQL}
 FLUSH PRIVILEGES;
 SQL_EOF
 )
 
 echo "[INFO] Reconfiguring MySQL user '${DB_USER}' for database '${DB_NAME}'..."
+if [[ "${LEGACY_DB_USER}" != "${DB_USER}" ]]; then
+  echo "[INFO] Also updating compatibility user '${LEGACY_DB_USER}' (same password)."
+fi
 "${COMPOSE_ENV[@]}" "${COMPOSE_CMD[@]}" "${COMPOSE_FILE_ARGS[@]}" up -d mysql >/dev/null
 
 echo "[INFO] Waiting for MySQL to become ready..."
