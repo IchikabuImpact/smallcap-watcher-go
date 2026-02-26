@@ -52,15 +52,15 @@ type DetailView struct {
 	Items         []DetailItem
 }
 
-func GenerateHTML(db *sql.DB) error {
-	if err := os.MkdirAll("output/detail", 0o755); err != nil {
+func GenerateHTML(db *sql.DB, outputDir string) error {
+	if err := os.MkdirAll(filepath.Join(outputDir, "detail"), 0o755); err != nil {
 		return err
 	}
-	if err := os.MkdirAll("output/static", 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Join(outputDir, "static"), 0o755); err != nil {
 		return err
 	}
 
-	if err := copyStaticAssets("static", "output/static"); err != nil {
+	if err := copyStaticAssets("static", filepath.Join(outputDir, "static")); err != nil {
 		return err
 	}
 
@@ -103,7 +103,7 @@ func GenerateHTML(db *sql.DB) error {
 		return err
 	}
 
-	listFile, err := os.Create("output/index.html")
+	listFile, err := os.Create(filepath.Join(outputDir, "index.html"))
 	if err != nil {
 		return err
 	}
@@ -124,7 +124,7 @@ func GenerateHTML(db *sql.DB) error {
 			return err
 		}
 
-		filePath := filepath.Join("output", "detail", item.Ticker+".html")
+		filePath := filepath.Join(outputDir, "detail", item.Ticker+".html")
 		detailFile, err := os.Create(filePath)
 		if err != nil {
 			return err

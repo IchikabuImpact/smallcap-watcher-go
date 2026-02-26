@@ -109,6 +109,29 @@ env -u DB_HOST -u DB_USER -u DB_PASSWORD -u DB_NAME -u MYSQL_ROOT_PASSWORD docke
 
 ※ 以前の `#37 15 ...` の行は先頭 `#` があるとコメント扱いになり、実行されません。
 
+
+### 4.2 生成物の鮮度ガード（再発防止）
+
+`--gen` 実行後に `index.html` の鮮度チェックを行い、以下の場合は **exit code != 0** で異常終了します。
+
+- `index.html` が存在しない
+- `index.html` のサイズが 0
+- `INDEX_MAX_AGE` より古い
+- `detail/*.html` の最新更新時刻より `index.html` が 60 秒以上古い
+
+`env.config` で次の値を調整できます。
+
+```env
+OUTPUT_DIR=output
+INDEX_MAX_AGE=36h
+```
+
+追加したヘルスチェックスクリプトでも同じ検証が可能です。
+
+```bash
+./scripts/check-index-freshness.sh output
+```
+
 ### 5. 取得APIの疎通確認（コンテナ内から）
 
 ```bash
@@ -117,6 +140,18 @@ env -u DB_HOST -u DB_USER -u DB_PASSWORD -u DB_NAME -u MYSQL_ROOT_PASSWORD docke
 
 200 応答で JSON が返ることを確認してください。
 
+
+
+### キャッシュヘッダ確認（index と detail の比較）
+
+```bash
+curl -I https://smallcap.pinkgold.space/
+curl -I https://smallcap.pinkgold.space/index.html
+curl -I https://smallcap.pinkgold.space/detail/150A.html
+```
+
+`/` と `/index.html` は `Cache-Control: public, max-age=60, must-revalidate` を返す構成を推奨します（`nginx/default.conf`）。
+CDN（Cloudflare 等）を利用している場合は、`/` と `/index.html` を短TTLまたはBypass Cacheにするルールを追加してください。
 
 ## トラブルシュート
 
