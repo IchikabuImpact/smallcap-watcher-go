@@ -14,6 +14,8 @@ type Config struct {
 	DBName                 string
 	ScraperBaseURL         string
 	ScraperRequestInterval time.Duration
+	OutputDir              string
+	IndexMaxAge            time.Duration
 }
 
 func Load() Config {
@@ -25,6 +27,8 @@ func Load() Config {
 		DBName:                 getEnv("DB_NAME", "jpx_data"),
 		ScraperBaseURL:         getEnv("SCRAPER_BASE_URL", "http://host.docker.internal:8085"),
 		ScraperRequestInterval: getEnvDuration("SCRAPER_REQUEST_INTERVAL", 3*time.Second),
+		OutputDir:              getEnv("OUTPUT_DIR", "output"),
+		IndexMaxAge:            getEnvDuration("INDEX_MAX_AGE", 36*time.Hour),
 	}
 }
 

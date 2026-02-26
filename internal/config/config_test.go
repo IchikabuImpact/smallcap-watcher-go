@@ -12,7 +12,7 @@ func TestLoadUsesConfigFileWhenPresent(t *testing.T) {
 	workDir := t.TempDir()
 	configPath := filepath.Join(workDir, "env.config")
 
-	content := []byte("DB_HOST=filehost:3306\nDB_USER=fileuser\nDB_PASSWORD=filepass\nDB_NAME=filename\nSCRAPER_BASE_URL=http://file-scraper:8082\nSCRAPER_REQUEST_INTERVAL=4s\n")
+	content := []byte("DB_HOST=filehost:3306\nDB_USER=fileuser\nDB_PASSWORD=filepass\nDB_NAME=filename\nSCRAPER_BASE_URL=http://file-scraper:8082\nSCRAPER_REQUEST_INTERVAL=4s\nOUTPUT_DIR=file-output\nINDEX_MAX_AGE=48h\n")
 	if err := os.WriteFile(configPath, content, 0o644); err != nil {
 		t.Fatalf("write env.config: %v", err)
 	}
@@ -49,6 +49,12 @@ func TestLoadUsesConfigFileWhenPresent(t *testing.T) {
 	if cfg.ScraperRequestInterval != 4*time.Second {
 		t.Fatalf("ScraperRequestInterval = %s", cfg.ScraperRequestInterval)
 	}
+	if cfg.OutputDir != "file-output" {
+		t.Fatalf("OutputDir = %q", cfg.OutputDir)
+	}
+	if cfg.IndexMaxAge != 48*time.Hour {
+		t.Fatalf("IndexMaxAge = %s", cfg.IndexMaxAge)
+	}
 }
 
 func TestLoadEnvOverridesConfigFile(t *testing.T) {
@@ -56,7 +62,7 @@ func TestLoadEnvOverridesConfigFile(t *testing.T) {
 	workDir := t.TempDir()
 	configPath := filepath.Join(workDir, "env.config")
 
-	content := []byte("DB_HOST=filehost:3306\nDB_USER=fileuser\nDB_PASSWORD=filepass\nDB_NAME=filename\nSCRAPER_BASE_URL=http://file-scraper:8082\nSCRAPER_REQUEST_INTERVAL=4s\n")
+	content := []byte("DB_HOST=filehost:3306\nDB_USER=fileuser\nDB_PASSWORD=filepass\nDB_NAME=filename\nSCRAPER_BASE_URL=http://file-scraper:8082\nSCRAPER_REQUEST_INTERVAL=4s\nOUTPUT_DIR=file-output\nINDEX_MAX_AGE=48h\n")
 	if err := os.WriteFile(configPath, content, 0o644); err != nil {
 		t.Fatalf("write env.config: %v", err)
 	}
@@ -79,6 +85,8 @@ func TestLoadEnvOverridesConfigFile(t *testing.T) {
 	t.Setenv("DB_NAME", "envname")
 	t.Setenv("SCRAPER_BASE_URL", "http://env-scraper:8082")
 	t.Setenv("SCRAPER_REQUEST_INTERVAL", "5s")
+	t.Setenv("OUTPUT_DIR", "env-output")
+	t.Setenv("INDEX_MAX_AGE", "72h")
 
 	cfg := Load()
 
@@ -99,6 +107,12 @@ func TestLoadEnvOverridesConfigFile(t *testing.T) {
 	}
 	if cfg.ScraperRequestInterval != 5*time.Second {
 		t.Fatalf("ScraperRequestInterval = %s", cfg.ScraperRequestInterval)
+	}
+	if cfg.OutputDir != "env-output" {
+		t.Fatalf("OutputDir = %q", cfg.OutputDir)
+	}
+	if cfg.IndexMaxAge != 72*time.Hour {
+		t.Fatalf("IndexMaxAge = %s", cfg.IndexMaxAge)
 	}
 }
 
@@ -137,11 +151,17 @@ func TestLoadDefaultsWithoutConfigFile(t *testing.T) {
 	if cfg.ScraperRequestInterval != 3*time.Second {
 		t.Fatalf("ScraperRequestInterval = %s", cfg.ScraperRequestInterval)
 	}
+	if cfg.OutputDir != "output" {
+		t.Fatalf("OutputDir = %q", cfg.OutputDir)
+	}
+	if cfg.IndexMaxAge != 36*time.Hour {
+		t.Fatalf("IndexMaxAge = %s", cfg.IndexMaxAge)
+	}
 }
 
 func resetEnv(t *testing.T) {
 	t.Helper()
-	keys := []string{"DB_HOST", "DB_USER", "DB_PASSWORD", "DB_NAME", "SCRAPER_BASE_URL", "SCRAPER_REQUEST_INTERVAL"}
+	keys := []string{"DB_HOST", "DB_USER", "DB_PASSWORD", "DB_NAME", "SCRAPER_BASE_URL", "SCRAPER_REQUEST_INTERVAL", "OUTPUT_DIR", "INDEX_MAX_AGE"}
 	for _, key := range keys {
 		if err := os.Unsetenv(key); err != nil {
 			t.Fatalf("unset %s: %v", key, err)
