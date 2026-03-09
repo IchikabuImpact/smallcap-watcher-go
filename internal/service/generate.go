@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"html/template"
 	"io/fs"
+	"log"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type ListItem struct {
@@ -107,11 +109,21 @@ func GenerateHTML(db *sql.DB, outputDir string) error {
 	if err != nil {
 		return err
 	}
-	defer listFile.Close()
 
 	if err := listTmpl.Execute(listFile, ListView{Items: items}); err != nil {
+		listFile.Close()
 		return err
 	}
+	if err := listFile.Close(); err != nil {
+		return err
+	}
+
+	indexPath := filepath.Join(outputDir, "index.html")
+	indexInfo, err := os.Stat(indexPath)
+	if err != nil {
+		return err
+	}
+	log.Printf("index generated path=%s mtime=%s size=%d", indexPath, indexInfo.ModTime().UTC().Format(time.RFC3339), indexInfo.Size())
 
 	for _, item := range items {
 		detailItems, err := loadDetailItems(db, item.Ticker)
@@ -146,7 +158,41 @@ func GenerateHTML(db *sql.DB, outputDir string) error {
 		detailFile.Close()
 	}
 
+	newestDetailPath, newestDetailInfo, err := newestGeneratedDetail(outputDir)
+	if err != nil {
+		return err
+	}
+	if indexInfo.ModTime().Before(newestDetailInfo.ModTime().Add(-1 * time.Minute)) {
+		return fmt.Errorf("generated index is older than latest detail page (index=%s detail=%s detail_path=%s)", indexInfo.ModTime().UTC().Format(time.RFC3339), newestDetailInfo.ModTime().UTC().Format(time.RFC3339), newestDetailPath)
+	}
+
 	return nil
+}
+
+func newestGeneratedDetail(outputDir string) (string, os.FileInfo, error) {
+	detailPattern := filepath.Join(outputDir, "detail", "*.html")
+	matches, err := filepath.Glob(detailPattern)
+	if err != nil {
+		return "", nil, fmt.Errorf("glob detail files failed for %s: %w", detailPattern, err)
+	}
+	if len(matches) == 0 {
+		return "", nil, fmt.Errorf("no detail files found under %s", filepath.Join(outputDir, "detail"))
+	}
+
+	var newestPath string
+	var newestInfo os.FileInfo
+	for _, path := range matches {
+		info, err := os.Stat(path)
+		if err != nil {
+			return "", nil, fmt.Errorf("stat detail file %s: %w", path, err)
+		}
+		if newestInfo == nil || info.ModTime().After(newestInfo.ModTime()) {
+			newestPath = path
+			newestInfo = info
+		}
+	}
+
+	return newestPath, newestInfo, nil
 }
 
 func loadListItems(db *sql.DB) ([]ListItem, error) {
