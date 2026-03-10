@@ -101,10 +101,13 @@ env -u DB_HOST -u DB_USER -u DB_PASSWORD -u DB_NAME -u MYSQL_ROOT_PASSWORD docke
 手動実行は成功するのに `cron` だけ `Access denied for user ...` になるケースがあります。
 `env -u ... --env-file env.config` を使い、毎回同じ認証情報で実行する設定を推奨します。
 
+`scripts/run-daily-batch.sh` を使うと、`--batch --gen` 実行と鮮度チェックを1コマンドに固定できます。
+
 ```cron
 # JPX Smallcap Watcher (Go)
+# 旧Python版ジョブ（python main.py --batch --gen）は停止する
 # 平日 15:30〜15:49 のどこか1回（ランダムディレイ + flock で多重起動防止）
-30-49 15 * * 1-5 cd /var/www/jpx-smallcap-watcher && /usr/bin/flock -n /tmp/jpx-smallcap-watcher.lock bash -lc 'sleep $((RANDOM % 60)); env -u DB_HOST -u DB_USER -u DB_PASSWORD -u DB_NAME -u MYSQL_ROOT_PASSWORD /usr/bin/docker compose --env-file env.config run --rm app --batch --gen' >> /var/www/jpx-smallcap-watcher/cron.log 2>&1
+30-49 15 * * 1-5 cd /var/www/jpx-smallcap-watcher && /usr/bin/flock -n /tmp/jpx-smallcap-watcher.lock bash -lc 'sleep $((RANDOM % 60)); ./scripts/run-daily-batch.sh /var/www/jpx-smallcap-watcher' >> /var/www/jpx-smallcap-watcher/cron.log 2>&1
 ```
 
 ※ 以前の `#37 15 ...` の行は先頭 `#` があるとコメント扱いになり、実行されません。
