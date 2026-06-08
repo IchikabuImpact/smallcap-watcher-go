@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-OUTPUT_DIR="${1:-output}"
-MAX_AGE_SECONDS="${INDEX_MAX_AGE_SECONDS:-172800}"
+OUTPUT_DIR="${1:-public}"
+MAX_AGE_SECONDS="${INDEX_MAX_AGE_SECONDS:-129600}"
 
 index_file="${OUTPUT_DIR}/index.html"
 detail_dir="${OUTPUT_DIR}/detail"

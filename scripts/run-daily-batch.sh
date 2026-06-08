@@ -9,9 +9,17 @@ if [[ ! -f env.config ]]; then
   exit 1
 fi
 
-# cron環境で export 済みのDB_* が優先される事故を防ぐ
-env -u DB_HOST -u DB_USER -u DB_PASSWORD -u DB_NAME -u MYSQL_ROOT_PASSWORD \
-  /usr/bin/docker compose --env-file env.config run --rm app --batch --gen
+# shellcheck disable=SC1091
+set -a
+source env.config
+set +a
+
+if [[ ! -d node_modules ]]; then
+  echo "ERROR: node_modules not found. Run 'npm ci --omit=dev' in ${REPO_DIR} first." >&2
+  exit 1
+fi
+
+node ./bin/smallcap-watcher.js --batch --gen
 
 # 生成物の簡易ヘルスチェック（index/detail の鮮度整合）
-./scripts/check-index-freshness.sh output
+./scripts/check-index-freshness.sh "${OUTPUT_DIR:-public}"

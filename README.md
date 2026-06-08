@@ -1,198 +1,158 @@
-# JPX Smallcap Watcher (Go)
+# JPX Smallcap Watcher (Node.js)
 
-独自の小型株のデーターを取得し、MySQLに保存したうえで静的HTMLレポートを生成するバッチツールです。Go版の実装になります。
-監視銘柄をsrc/tickers1.tsvに入れて起動するだけ　crontabで終値の出てくる15時半以降に設定すると終値ベースで眺めることができます。
+独自の小型株データを取得し、MySQL に保存したうえで `public/` に静的 HTML レポートを生成する Node.js バッチツールです。
+Docker 常駐コンテナを前提にせず、VPS 上の `/var/www/jpx-smallcap-watcher` で Node.js と Apache だけを使う構成にしています。
+
+監視銘柄は `src/tickers1.tsv` で管理します。crontab で終値が出てくる 15:30 以降に `--batch --gen` を実行すると、終値ベースのダッシュボードを `public/index.html` と `public/detail/*.html` に生成できます。
 
 ## 主な機能
 
-- JPXデータ取得 → DB保存 → シグナル判定 → HTML生成
+- JPX データ取得 → DB 保存 → シグナル判定 → 静的 HTML 生成
 - 監視銘柄は `src/tickers1.tsv` で管理
-- 生成物は `output/` に出力（`output/index.html` / `output/detail/*.html`）
+- 生成物は `public/` に出力（`public/index.html` / `public/detail/*.html`）
+- 既存の `env.config` 形式を継続利用
+- Node.js v22 系で動作（VPS 確認済み: `v22.22.0`）
 
 ## 必要要件
 
-- **Docker** / **Docker Compose**
+- Node.js 22 以上
+- npm
+- MySQL 8.0 互換のデータベース
+- スクレイパー API（`SCRAPER_BASE_URL/scrape?ticker=5020` のように JSON を返すもの）
 
-## Dockerのインストール（Ubuntu / RedHat系 Linux）
+## VPS への配置前提
 
-### Ubuntu
+この README のコマンド例は、プロジェクトが以下に配置されている前提です。
 
 ```bash
-sudo snap install docker
-sudo apt install docker.io
-sudo apt install podman-docker
+/var/www/jpx-smallcap-watcher
 ```
 
-#### Ubuntu 24.04 LTS (WSL) の注意点
+Apache 側の DocumentRoot / Alias / cron 設定は運用側で調整してください。静的サイトとして公開する対象は `public/` です。
 
-WSL環境で `podman-docker` を入れると Docker CLI が Podman エミュレーションになり、
-`docker compose` が外部の `docker-compose` (v1) を呼び出して `FileNotFoundError` が出る場合があります。
-その場合は以下を確認してください。
+## 1. セットアップ
 
 ```bash
-# Docker Desktop for Windows を使うか、WSL 内で docker を有効化する
-sudo systemctl enable --now docker
-
-# podman-docker を外して Docker 公式パッケージ + Compose プラグインを入れる
-sudo apt remove podman-docker
-sudo apt update
-sudo apt install ca-certificates curl gnupg
-sudo install -m 0755 -d /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-sudo chmod a+r /etc/apt/keyrings/docker.gpg
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo \"$VERSION_CODENAME\") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-sudo apt update
-sudo apt install docker-ce docker-ce-cli docker-compose-plugin
-
-# docker compose が v2 系か確認する
-docker compose version
-```
-
-### RedHat系 Linux（RHEL / CentOS / Rocky / Alma など）
-
-```bash
-sudo dnf install docker
-sudo systemctl enable --now docker
-```
-
-## 使い方（Docker Compose）
-
-### 1. 設定ファイルの準備
-
-```bash
+cd /var/www/jpx-smallcap-watcher
 cp env.config.sample env.config
+npm ci --omit=dev
 ```
 
-必要に応じて `env.config` を編集してください。`env.config` が存在しない場合はデフォルト値で動作します。Docker実行時は `env.config` をコンテナへマウントします。
-
-特に、取得先のスクレイパーは `SCRAPER_BASE_URL` で切り替えできます。`SCRAPER_REQUEST_INTERVAL` を指定すると、スクレイパーへのアクセス間隔を調整できます（例: `3s`）。
-
-- ローカル開発: `http://host.docker.internal:8085`
-- Docker からホスト上のスクレイパーにアクセスする場合: `http://host.docker.internal:8085`
-
-### 2. コンテナ起動（DB + Web）
+ローカルでテストも実行したい場合は、dev 依存はありませんが通常の `npm ci` でも問題ありません。
 
 ```bash
-env -u DB_HOST -u DB_USER -u DB_PASSWORD -u DB_NAME -u MYSQL_ROOT_PASSWORD docker compose --env-file env.config up -d
+npm ci
+npm test
 ```
 
-`http://localhost:8183` を開くとレポートを確認できます（生成後）。
+## 2. 設定ファイル
 
-### 3. 初回のみ: DB初期化と監視銘柄の投入
+`env.config` は既存形式をそのまま読み込みます。プロセス環境変数が設定済みの場合は、環境変数の値が優先されます。
+
+```env
+DB_HOST=localhost:3306
+DB_USER=jpx_user
+DB_PASSWORD=jpx_password
+DB_NAME=jpx_data
+SCRAPER_BASE_URL=http://localhost:8085
+SCRAPER_REQUEST_INTERVAL=3s
+OUTPUT_DIR=public
+INDEX_MAX_AGE=36h
+```
+
+主な項目:
+
+- `DB_HOST`: MySQL の接続先。ホスト上で動かすため通常は `localhost:3306`。
+- `SCRAPER_BASE_URL`: スクレイパー API のベース URL。Docker の `host.docker.internal` ではなく、VPS ホスト上では通常 `http://localhost:8085`。
+- `SCRAPER_REQUEST_INTERVAL`: スクレイパー API へのアクセス間隔。
+- `OUTPUT_DIR`: 静的 HTML の生成先。Apache で公開する `public` を推奨。
+- `INDEX_MAX_AGE`: 生成後ヘルスチェックで許容する `index.html` の最大経過時間。
+
+## 3. 初回のみ: DB 初期化と監視銘柄の投入
 
 ```bash
-env -u DB_HOST -u DB_USER -u DB_PASSWORD -u DB_NAME -u MYSQL_ROOT_PASSWORD docker compose --env-file env.config run --rm app --init
-env -u DB_HOST -u DB_USER -u DB_PASSWORD -u DB_NAME -u MYSQL_ROOT_PASSWORD docker compose --env-file env.config run --rm app --seed
+cd /var/www/jpx-smallcap-watcher
+node ./bin/smallcap-watcher.js --init
+node ./bin/smallcap-watcher.js --seed
 ```
 
-### 4. 日次/都度の更新
+## 4. 日次/都度の更新
 
 ```bash
 # 取得のみ
-env -u DB_HOST -u DB_USER -u DB_PASSWORD -u DB_NAME -u MYSQL_ROOT_PASSWORD docker compose --env-file env.config run --rm app --batch
+node ./bin/smallcap-watcher.js --batch
+
+# HTML生成のみ
+node ./bin/smallcap-watcher.js --gen
 
 # 取得 + HTML生成
-env -u DB_HOST -u DB_USER -u DB_PASSWORD -u DB_NAME -u MYSQL_ROOT_PASSWORD docker compose --env-file env.config run --rm app --batch --gen
+node ./bin/smallcap-watcher.js --batch --gen
 ```
 
-### 4.1 crontab 設定例（推奨）
+`npm` script でも実行できます。
 
-`cron` はログインシェルの環境変数を引き継がない/一部だけ引き継ぐため、
-手動実行は成功するのに `cron` だけ `Access denied for user ...` になるケースがあります。
-`env -u ... --env-file env.config` を使い、毎回同じ認証情報で実行する設定を推奨します。
+```bash
+npm run batch
+npm run gen
+npm start -- --batch --gen
+```
 
-`scripts/run-daily-batch.sh` を使うと、`--batch --gen` 実行と鮮度チェックを1コマンドに固定できます。
+## 5. crontab 設定例
+
+`scripts/run-daily-batch.sh` を使うと、`--batch --gen` 実行と鮮度チェックを 1 コマンドに固定できます。
 
 ```cron
-# JPX Smallcap Watcher (Go)
-# 旧Python版ジョブ（python main.py --batch --gen）は停止する
+# JPX Smallcap Watcher (Node.js)
 # 平日 15:30〜15:49 のどこか1回（ランダムディレイ + flock で多重起動防止）
 30-49 15 * * 1-5 cd /var/www/jpx-smallcap-watcher && /usr/bin/flock -n /tmp/jpx-smallcap-watcher.lock bash -lc 'sleep $((RANDOM % 60)); ./scripts/run-daily-batch.sh /var/www/jpx-smallcap-watcher' >> /var/www/jpx-smallcap-watcher/cron.log 2>&1
 ```
 
-※ 以前の `#37 15 ...` の行は先頭 `#` があるとコメント扱いになり、実行されません。
+## 6. 生成物の鮮度ガード
 
-
-### 4.2 生成物の鮮度ガード（再発防止）
-
-`--gen` 実行後に `index.html` の鮮度チェックを行い、以下の場合は **exit code != 0** で異常終了します。
+`--gen` 実行後に `index.html` の鮮度チェックを行い、以下の場合は終了コード 1 で異常終了します。
 
 - `index.html` が存在しない
 - `index.html` のサイズが 0
 - `INDEX_MAX_AGE` より古い
 - `detail/*.html` の最新更新時刻より `index.html` が 60 秒以上古い
 
-`env.config` で次の値を調整できます。
-
-```env
-OUTPUT_DIR=output
-INDEX_MAX_AGE=36h
-```
-
 追加したヘルスチェックスクリプトでも同じ検証が可能です。
 
 ```bash
-./scripts/check-index-freshness.sh output
+./scripts/check-index-freshness.sh public
 ```
 
-### 5. 取得APIの疎通確認（コンテナ内から）
+## 7. 取得 API の疎通確認
 
 ```bash
-env -u DB_HOST -u DB_USER -u DB_PASSWORD -u DB_NAME -u MYSQL_ROOT_PASSWORD docker compose --env-file env.config run --rm app sh -c 'set -a; . /app/env.config; set +a; curl -sS "$SCRAPER_BASE_URL/scrape?ticker=5020"'
+set -a; . ./env.config; set +a
+curl -sS "$SCRAPER_BASE_URL/scrape?ticker=5020"
 ```
 
 200 応答で JSON が返ることを確認してください。
 
+## 8. Apache 公開ディレクトリ
 
+`public/` は実行時に生成される出力先です（リポジトリには `.gitkeep` だけを置き、HTML/CSS/画像は `--gen` 実行時に作成/コピーします）。Apache 側では以下のどちらかの形で公開できます。
 
-### キャッシュヘッダ確認（index と detail の比較）
+- `DocumentRoot /var/www/jpx-smallcap-watcher/public`
+- 既存 VirtualHost から `/var/www/jpx-smallcap-watcher/public` へ Alias
 
-```bash
-curl -I https://smallcap.pinkgold.space/
-curl -I https://smallcap.pinkgold.space/index.html
-curl -I https://smallcap.pinkgold.space/detail/150A.html
-```
+`public/static/` は `--gen` 実行時に `static/` からコピーされます。PR に生成物やバイナリ資産の重複を含めないため、`public/static/` は Git 管理しません。
 
-`/` と `/index.html` は `Cache-Control: public, max-age=60, must-revalidate` を返す構成を推奨します（`nginx/default.conf`）。
-CDN（Cloudflare 等）を利用している場合は、`/` と `/index.html` を短TTLまたはBypass Cacheにするルールを追加してください。
-
-## トラブルシュート
-
-### `Access denied for user` が出る場合
-
-`Error 1045 (28000): Access denied for user ...` は、**ポート競合よりも認証情報の不一致**で起きることが多いです。
-特に、`mysql-data` ボリュームを使っていると、MySQL のユーザー情報は初回作成時の値が保持されます。
-また、シェルに `DB_USER` などの環境変数が既に export されていると、`docker compose` の変数展開で `env.config` より優先され、意図しないユーザー（例: `jpx`）で接続してしまうことがあります。
-
-そのため README のコマンドは `env -u ... docker compose --env-file env.config ...` 形式にしており、DB 関連の環境変数を一度クリアしてから `env.config` の値を確実に使うようにしています。
-
-以下で `env.config` の値に合わせて DB ユーザー権限を再設定できます。
+## 9. 開発者向け
 
 ```bash
-./scripts/db-repair-auth.sh
+npm test
+node ./bin/smallcap-watcher.js --help
 ```
 
-このスクリプトは MySQL 再起動後に `healthy` 相当の状態まで待ってから権限修復 SQL を流すため、
-`Can't connect to local MySQL server through socket ...` の一時エラーを回避できます。
+Node.js 版の主要ファイル:
 
-その後、再実行してください。
-
-```bash
-env -u DB_HOST -u DB_USER -u DB_PASSWORD -u DB_NAME -u MYSQL_ROOT_PASSWORD docker compose --env-file env.config run --rm app --batch --gen
-```
-
-### VPS 側でポート競合を確認したい場合
-
-このプロジェクトの MySQL はホスト `3312` を使います（`3312:3306`）。
-競合確認は以下でできます。
-
-```bash
-ss -ltnp | grep 3312
-```
-
-既に別プロセスが使っている場合は、`docker-compose.yml` の左側ポート（`3312`）を別番号に変更してください。
-
-## リバースプロキシ運用の補足
-
-同一ホスト上で複数の Docker Compose を動かしている場合、リバースプロキシの upstream 指定で 502 が発生しがちです。
-プロキシがコンテナ内なら service 名、ホスト上なら公開ポートに向けてください。
+- `bin/smallcap-watcher.js`: CLI エントリポイント
+- `lib/config.js`: `env.config` 読み込みと duration パース
+- `lib/db.js`: MySQL 接続、スキーマ初期化、銘柄 seed
+- `lib/api.js`: スクレイパー API クライアント
+- `lib/service.js`: batch 更新と HTML 生成
+- `lib/render.js`: 静的 HTML レンダリング
+- `lib/freshness.js`: 生成物ヘルスチェック
