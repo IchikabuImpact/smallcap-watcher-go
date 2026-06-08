@@ -1,0 +1,23 @@
+{
+  "name": "jpx-smallcap-watcher",
+  "version": "1.0.0",
+  "description": "JPX smallcap watcher static site generator for Node.js",
+  "type": "module",
+  "bin": {
+    "smallcap-watcher": "./bin/smallcap-watcher.js"
+  },
+  "scripts": {
+    "start": "node ./bin/smallcap-watcher.js",
+    "init": "node ./bin/smallcap-watcher.js --init",
+    "seed": "node ./bin/smallcap-watcher.js --seed",
+    "batch": "node ./bin/smallcap-watcher.js --batch",
+    "gen": "node ./bin/smallcap-watcher.js --gen",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "dependencies": {
+    "mysql2": "^3.15.3"
+  }
+}
