@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { parseDurationMs } from '../lib/config.js';
 import { parseNumeric, parsePreviousClose } from '../lib/parser.js';
-import { escapeHtml, formatFloat, formatInt } from '../lib/render.js';
+import { escapeHtml, formatFloat, formatInt, renderDetail } from '../lib/render.js';
 
 test('parseNumeric handles Japanese market units and decorations', () => {
   assert.deepEqual(parseNumeric('1,234円'), { value: 1234, ok: true });
@@ -27,4 +27,20 @@ test('HTML formatting helpers handle empty values safely', () => {
   assert.equal(formatInt(1234.9), '1,234');
   assert.equal(formatFloat(null), '-');
   assert.equal(escapeHtml('<x>&"\''), '&lt;x&gt;&amp;&quot;&#39;');
+});
+
+test('detail page exposes sparse history state', () => {
+  const html = renderDetail({
+    ticker: '2164',
+    companyName: '地域新聞社',
+    currentPrice: 288,
+    previousClose: '289.0 (06/05)',
+    signal: 'Neutral',
+    marketCap: '10億円',
+    items: [],
+  });
+
+  assert.match(html, /0 records/);
+  assert.match(html, /履歴データがありません/);
+  assert.match(html, /過去分データがDBに蓄積されていません/);
 });
